@@ -1,5 +1,6 @@
 ﻿namespace QSPNet.Interpreter {
     public enum SyntaxKind {
+        // tokens
         EndOfFileToken,
         Unknown,
 
@@ -12,5 +13,9 @@
         SlashToken,
         OpenParenthesisToken,
         CloseParenthesisToken,
+        
+        // expressions
+        NumberExpression,
+        BinaryExpression
     }
 }
