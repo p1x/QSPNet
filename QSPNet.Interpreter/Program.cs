@@ -43,8 +43,10 @@ namespace QSPNet.Interpreter {
         private static void Process(string line) {
             var lexer = new Lexer(line);
             var tokens = lexer.Lex();
-            foreach (var token in tokens)
-                Console.WriteLine(token.ToString());
+            
+            if(_replOptions.HasFlag(ReplOptions.PrintLexedTokens))
+                foreach (var token in tokens)
+                    Console.WriteLine(token.ToString());
         }
     }
 }
