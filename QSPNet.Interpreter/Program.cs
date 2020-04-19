@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 
 namespace QSPNet.Interpreter {
     static class Program {
@@ -41,7 +41,10 @@ namespace QSPNet.Interpreter {
         private static ReplOptions SwitchFlag(ReplOptions flag) => (_replOptions & flag) != 0 ? _replOptions & ~flag : _replOptions ^ flag;
 
         private static void Process(string line) {
-            Console.WriteLine(line);
+            var lexer = new Lexer(line);
+            var tokens = lexer.Lex();
+            foreach (var token in tokens)
+                Console.WriteLine(token.ToString());
         }
     }
 }
