@@ -1,6 +1,7 @@
 ﻿namespace QSPNet.Interpreter {
     public class Parser {
         private readonly Lexer _lexer;
+        private readonly ParserDiagnosticBag _diagnostics = new ParserDiagnosticBag();
         
         private SyntaxToken _current;
         private SyntaxToken _next;
@@ -22,8 +23,8 @@
                 left = new BinaryExpressionSyntax(left, operatorToken, right);
             }
 
-            var lexerDiagnostics = _lexer.GetDiagnostics();
-            return (left, lexerDiagnostics);
+            var diagnostics = _lexer.GetDiagnostics().With(_diagnostics);
+            return (left, diagnostics);
         }
 
         private ExpressionSyntax ParsePrimaryExpression() {
@@ -52,6 +53,7 @@
             if (_current.Kind == kind)
                 return Next();
 
+            _diagnostics.ReportUnexpectedToken(kind, _current);
             return SyntaxToken.Manufacture(kind, _current.Position);
         }
     }

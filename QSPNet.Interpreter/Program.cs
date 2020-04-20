@@ -63,8 +63,12 @@ namespace QSPNet.Interpreter {
 
             if (_replOptions.HasFlag(ReplOptions.PrintSyntaxTokens)) {
                 static void print(object o, int i) {
+                    if (o is SyntaxToken t && t.IsManufactured)
+                        Console.ForegroundColor = ConsoleColor.Red;
                     Console.Write(new string(' ', i * 4));
                     Console.WriteLine(o);
+                    Console.ResetColor();
+                    
                     if (o is SyntaxNode n) {
                         foreach (var c in n.GetChildren()) {
                             print(c, i + 1);

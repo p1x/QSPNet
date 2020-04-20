@@ -63,7 +63,7 @@ namespace QSPNet.Interpreter {
                     return new SyntaxToken(SyntaxKind.CloseParenthesisToken, start, _text.Substring(start, 1));
                 default:
                     var tokenText = _text.Substring(start, 1);
-                    _diagnostics.ReportUnknownToken(start, tokenText);
+                    _diagnostics.ReportBadCharacter(start, tokenText);
                     return new SyntaxToken(SyntaxKind.Unknown, start, tokenText);
             }
         }
