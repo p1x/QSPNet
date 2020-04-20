@@ -1,7 +1,7 @@
 ﻿namespace QSPNet.Interpreter {
     public class Parser {
         private readonly Lexer _lexer;
-
+        
         private SyntaxToken _current;
         private SyntaxToken _next;
         
@@ -9,6 +9,26 @@
             _lexer = new Lexer(text);
             _current = FilterNext(_lexer);
             _next = FilterNext(_lexer);
+        }
+
+        public (ExpressionSyntax syntax, DiagnosticBag diagnostics) Parse() {
+            var left = ParsePrimaryExpression();
+
+            while (_current.Kind == SyntaxKind.PlusToken || 
+                   _current.Kind == SyntaxKind.MinusToken) {
+                
+                var operatorToken = Next();
+                var right = ParsePrimaryExpression();
+                left = new BinaryExpressionSyntax(left, operatorToken, right);
+            }
+
+            var lexerDiagnostics = _lexer.GetDiagnostics();
+            return (left, lexerDiagnostics);
+        }
+
+        private ExpressionSyntax ParsePrimaryExpression() {
+            var token = Match(SyntaxKind.NumberToken);
+            return new NumberExpressionSyntax(token);
         }
 
         private static SyntaxToken FilterNext(Lexer lexer) {
@@ -20,9 +40,7 @@
 
             return token;
         }
-        
-        private SyntaxToken Current => _current;
-        
+
         private SyntaxToken Next() {
             var current = _current;
             _current = _next;
@@ -31,29 +49,10 @@
         }
 
         private SyntaxToken Match(SyntaxKind kind) {
-            if (Current.Kind == kind)
+            if (_current.Kind == kind)
                 return Next();
 
-            return SyntaxToken.Manufacture(kind, Current.Position);
-        }
-        
-        public ExpressionSyntax Parse() {
-            var left = ParsePrimaryExpression();
-
-            while (Current.Kind == SyntaxKind.PlusToken || 
-                   Current.Kind == SyntaxKind.MinusToken) {
-                
-                var operatorToken = Next();
-                var right = ParsePrimaryExpression();
-                left = new BinaryExpressionSyntax(left, operatorToken, right);
-            }
-
-            return left;
-        }
-
-        private ExpressionSyntax ParsePrimaryExpression() {
-            var token = Match(SyntaxKind.NumberToken);
-            return new NumberExpressionSyntax(token);
+            return SyntaxToken.Manufacture(kind, _current.Position);
         }
     }
 }

@@ -59,7 +59,7 @@ namespace QSPNet.Interpreter {
             }
             
             var parser = new Parser(line);
-            var node = parser.Parse();
+            var (node, diagnostics) = parser.Parse();
 
             if (_replOptions.HasFlag(ReplOptions.PrintSyntaxTokens)) {
                 static void print(object o, int i) {
@@ -74,6 +74,16 @@ namespace QSPNet.Interpreter {
                 
                 print(node, 0);
             }
+            
+            foreach (var d in diagnostics)
+                PrintDiagnostics(d);
+        }
+
+        private static void PrintDiagnostics(Diagnostics diagnostics) {
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.Error.Write($"[{diagnostics.ErrorCode:x4}] ");
+            Console.Error.WriteLine(diagnostics.GetFormattedMessage());
+            Console.ResetColor();
         }
     }
 }

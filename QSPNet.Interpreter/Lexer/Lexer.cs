@@ -3,6 +3,7 @@ using System.Collections.Generic;
 
 namespace QSPNet.Interpreter {
     public class Lexer {
+        private readonly LexerDiagnosticBag _diagnostics = new LexerDiagnosticBag();
         private readonly string _text;
         private int _position;
         
@@ -16,6 +17,8 @@ namespace QSPNet.Interpreter {
                 yield return token;
         }
 
+        public LexerDiagnosticBag GetDiagnostics() => _diagnostics; 
+        
         private char NextChar() {
             _position++;
             return Peek();
@@ -45,15 +48,24 @@ namespace QSPNet.Interpreter {
                 return new SyntaxToken(SyntaxKind.WhiteSpaceToken, start, _text.Substring(start, _position - start));
             
             NextChar(); // consume one
-            return current switch {
-                '+' => new SyntaxToken(SyntaxKind.PlusToken, start, _text.Substring(start, 1)),
-                '-' => new SyntaxToken(SyntaxKind.MinusToken, start, _text.Substring(start, 1)),
-                '*' => new SyntaxToken(SyntaxKind.StarToken, start, _text.Substring(start, 1)),
-                '/' => new SyntaxToken(SyntaxKind.SlashToken, start, _text.Substring(start, 1)),
-                '(' => new SyntaxToken(SyntaxKind.OpenParenthesisToken, start, _text.Substring(start, 1)),
-                ')' => new SyntaxToken(SyntaxKind.CloseParenthesisToken, start, _text.Substring(start, 1)),
-                _ => new SyntaxToken(SyntaxKind.Unknown, start, _text.Substring(start, 1))
-            };
+            switch (current) {
+                case '+':
+                    return new SyntaxToken(SyntaxKind.PlusToken, start, _text.Substring(start, 1));
+                case '-':
+                    return new SyntaxToken(SyntaxKind.MinusToken, start, _text.Substring(start, 1));
+                case '*':
+                    return new SyntaxToken(SyntaxKind.StarToken, start, _text.Substring(start, 1));
+                case '/':
+                    return new SyntaxToken(SyntaxKind.SlashToken, start, _text.Substring(start, 1));
+                case '(':
+                    return new SyntaxToken(SyntaxKind.OpenParenthesisToken, start, _text.Substring(start, 1));
+                case ')':
+                    return new SyntaxToken(SyntaxKind.CloseParenthesisToken, start, _text.Substring(start, 1));
+                default:
+                    var tokenText = _text.Substring(start, 1);
+                    _diagnostics.ReportUnknownToken(start, tokenText);
+                    return new SyntaxToken(SyntaxKind.Unknown, start, tokenText);
+            }
         }
     }
 }
