@@ -1,30 +1,39 @@
 ﻿namespace QSPNet.Interpreter {
     public class Parser {
+        private readonly string _text;
         private readonly Lexer _lexer;
-        private readonly ParserDiagnosticBag _diagnostics = new ParserDiagnosticBag();
         
+        private readonly ParserDiagnosticBag _diagnostics = new ParserDiagnosticBag();
+
         private SyntaxToken _current;
         private SyntaxToken _next;
-        
+
         public Parser(string text) {
+            _text = text;
             _lexer = new Lexer(text);
             _current = FilterNext(_lexer);
             _next = FilterNext(_lexer);
         }
 
-        public (ExpressionSyntax syntax, DiagnosticBag diagnostics) Parse() {
+        public (SyntaxTree syntaxTree, DiagnosticBag diagnostics) Parse() {
+            var expression = ParseExpression();
+            var endOfFileToken = Match(SyntaxKind.EndOfFileToken);
+            var syntaxTree = new SyntaxTree(_text, expression, endOfFileToken);
+            var diagnostics = _lexer.GetDiagnostics().With(_diagnostics);
+            return (syntaxTree, diagnostics);
+        }
+
+        private ExpressionSyntax ParseExpression() {
             var left = ParsePrimaryExpression();
 
-            while (_current.Kind == SyntaxKind.PlusToken || 
+            while (_current.Kind == SyntaxKind.PlusToken ||
                    _current.Kind == SyntaxKind.MinusToken) {
-                
                 var operatorToken = Next();
                 var right = ParsePrimaryExpression();
                 left = new BinaryExpressionSyntax(left, operatorToken, right);
             }
 
-            var diagnostics = _lexer.GetDiagnostics().With(_diagnostics);
-            return (left, diagnostics);
+            return left;
         }
 
         private ExpressionSyntax ParsePrimaryExpression() {

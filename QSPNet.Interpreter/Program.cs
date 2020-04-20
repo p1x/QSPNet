@@ -54,12 +54,14 @@ namespace QSPNet.Interpreter {
             if(_replOptions.HasFlag(ReplOptions.PrintLexedTokens)) {
                 var lexer = new Lexer(line);
                 var tokens = lexer.Lex();
+                Console.WriteLine("=== Lexed Tokens ===");
                 foreach (var token in tokens)
                     Console.WriteLine(token.ToString());
+                Console.WriteLine();
             }
             
             var parser = new Parser(line);
-            var (node, diagnostics) = parser.Parse();
+            var (syntaxTree, diagnostics) = parser.Parse();
 
             if (_replOptions.HasFlag(ReplOptions.PrintSyntaxTokens)) {
                 static void print(object o, int i) {
@@ -75,8 +77,9 @@ namespace QSPNet.Interpreter {
                         }
                     }
                 }
-                
-                print(node, 0);
+                Console.WriteLine("=== Syntax Tree ===");
+                print(syntaxTree.Root, 0);
+                Console.WriteLine();
             }
             
             foreach (var d in diagnostics)

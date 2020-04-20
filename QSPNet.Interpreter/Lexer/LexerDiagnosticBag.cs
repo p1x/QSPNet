@@ -7,6 +7,6 @@
         public LexerDiagnosticBag() : base(LexerCode) { }
 
         public void ReportBadCharacter(int start, string text) => 
-            Report(BadCharacter, start, text, "Bad character '{0}' at {1}.");
+            Report(BadCharacter, start, text, "Bad character '{0}' at position {1}.");
     }
 }
