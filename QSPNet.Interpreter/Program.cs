@@ -84,6 +84,12 @@ namespace QSPNet.Interpreter {
             
             foreach (var d in diagnostics)
                 PrintDiagnostics(d);
+
+            if (diagnostics.Count == 0) {
+                var evaluator = new Evaluator(syntaxTree.Root);
+                var result = evaluator.Evaluate();
+                Console.WriteLine(result);
+            }
         }
 
         private static void PrintDiagnostics(Diagnostics diagnostics) {

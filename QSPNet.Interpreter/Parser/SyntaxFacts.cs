@@ -13,5 +13,8 @@ namespace QSPNet.Interpreter {
                 SyntaxKind.CloseParenthesisToken => ")",
                 _ => kind.ToString()
             };
+
+        public static bool HasValue(this SyntaxKind kind) =>
+            kind == SyntaxKind.NumberToken;
     }
 }

@@ -6,7 +6,10 @@
 
         public LexerDiagnosticBag() : base(LexerCode) { }
 
-        public void ReportBadCharacter(int start, string text) => 
-            Report(BadCharacter, start, text, "Bad character '{0}' at position {1}.");
+        public void ReportBadCharacter(int position, string text) => 
+            Report(BadCharacter, position, text, "Bad character '{0}' at position {1}.");
+
+        public void ReportInvalidInteger(int position, string text) => 
+            Report(2, position, text, "Number '{0}' at position {1} is not a valid integer.");
     }
 }

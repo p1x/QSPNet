@@ -42,8 +42,14 @@ namespace QSPNet.Interpreter {
                 return true;
             }
 
-            if (tryRead(char.IsDigit))
-                return new SyntaxToken(SyntaxKind.NumberToken, start, _text.Substring(start, _position - start));
+            if (tryRead(char.IsDigit)) {
+                var tokenText = _text.Substring(start, _position - start);
+                if (int.TryParse(tokenText, out var value))
+                    return new SyntaxToken(SyntaxKind.NumberToken, start, tokenText, value);
+
+                _diagnostics.ReportInvalidInteger(start, tokenText);
+                return SyntaxToken.Manufacture(SyntaxKind.NumberToken, start);
+            }
             if (tryRead(char.IsWhiteSpace))
                 return new SyntaxToken(SyntaxKind.WhiteSpaceToken, start, _text.Substring(start, _position - start));
             
