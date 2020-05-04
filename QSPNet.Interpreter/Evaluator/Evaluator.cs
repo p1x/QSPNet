@@ -31,6 +31,7 @@
                 SyntaxKind.MinusToken => (int)left - (int)right,
                 SyntaxKind.SlashToken => (int)left / (int)right,
                 SyntaxKind.StarToken => (int)left * (int)right,
+                SyntaxKind.ModToken => (int)left % (int)right,
                 _ => string.Empty
             };
         }

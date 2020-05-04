@@ -1,4 +1,4 @@
-﻿namespace QSPNet.Interpreter {
+﻿﻿namespace QSPNet.Interpreter {
     public enum SyntaxTokenKind {
         EndOfFile        = 0x00000000,
         Unknown          = 0x00000001,
@@ -6,10 +6,11 @@
         Number           = 0x00000003,
         Plus             = 0x00000004,
         Minus            = 0x00000005,
-        Star             = 0x00000006,
-        Slash            = 0x00000007,
-        OpenParenthesis  = 0x00000008,
-        CloseParenthesis = 0x00000009,
+        Mod              = 0x00000006,
+        Star             = 0x00000007,
+        Slash            = 0x00000008,
+        OpenParenthesis  = 0x00000009,
+        CloseParenthesis = 0x0000000a,
     }
     public enum SyntaxExpressionKind {
         Number = 0x00010000,
@@ -23,13 +24,14 @@
         NumberToken           = 0x00000003,
         PlusToken             = 0x00000004,
         MinusToken            = 0x00000005,
-        StarToken             = 0x00000006,
-        SlashToken            = 0x00000007,
-        OpenParenthesisToken  = 0x00000008,
-        CloseParenthesisToken = 0x00000009,
-        NumberExpression      = 0x0001000a,
-        UnaryExpression       = 0x0001000b,
-        BinaryExpression      = 0x0001000c,
+        ModToken              = 0x00000006,
+        StarToken             = 0x00000007,
+        SlashToken            = 0x00000008,
+        OpenParenthesisToken  = 0x00000009,
+        CloseParenthesisToken = 0x0000000a,
+        NumberExpression      = 0x0001000b,
+        UnaryExpression       = 0x0001000c,
+        BinaryExpression      = 0x0001000d,
     }
 
     public static partial class SyntaxFacts {
@@ -44,6 +46,7 @@
             kind switch {
                 SyntaxTokenKind.Plus             => "+",
                 SyntaxTokenKind.Minus            => "-",
+                SyntaxTokenKind.Mod              => "MOD",
                 SyntaxTokenKind.Star             => "*",
                 SyntaxTokenKind.Slash            => "/",
                 SyntaxTokenKind.OpenParenthesis  => "(",
@@ -64,22 +67,10 @@
             kind switch {
                 SyntaxTokenKind.Plus  => 0x00000001,
                 SyntaxTokenKind.Minus => 0x00000001,
-                SyntaxTokenKind.Star  => 0x00000002,
-                SyntaxTokenKind.Slash => 0x00000002,
+                SyntaxTokenKind.Mod   => 0x00000002,
+                SyntaxTokenKind.Star  => 0x00000003,
+                SyntaxTokenKind.Slash => 0x00000003,
                 _ => 0
-            };
-    }
-
-    public static class LexerHelper {
-        public static SyntaxKind LexCharacter(char current) 
-            => current switch {
-                '+' => SyntaxKind.PlusToken,
-                '-' => SyntaxKind.MinusToken,
-                '*' => SyntaxKind.StarToken,
-                '/' => SyntaxKind.SlashToken,
-                '(' => SyntaxKind.OpenParenthesisToken,
-                ')' => SyntaxKind.CloseParenthesisToken,
-                _ => SyntaxKind.UnknownToken
             };
     }
 }

@@ -1,4 +1,4 @@
-﻿<#@ template language="C#" #>
+﻿﻿<#@ template language="C#" #>
 <#@ assembly name="System.Core" #>
 <#@ import namespace="System.Text" #>
 <#@ import namespace="System.Collections.Generic" #>
@@ -18,8 +18,9 @@
     var operatorTokens = new (string name, string text, int binaryPrecedence, int unaryPrecedence)[] {
         ("Plus",  "+", 1, 1),
         ("Minus", "-", 1, 1),
-        ("Star",  "*", 2, 0),
-        ("Slash", "/", 2, 0)
+        ("Mod", "MOD", 2, 0),
+        ("Star",  "*", 3, 0),
+        ("Slash", "/", 3, 0),
     };
     var nonOperatorTokens = new (string name, string text)[] {
         ("OpenParenthesis", "("),
@@ -42,13 +43,34 @@
 
     var indent = new string(' ', 4);
 
+    void WriteIndent1() => Write(indent);
+    void WriteIndent2() {
+        WriteIndent1();
+        WriteIndent1();
+    }
+    void WriteIndent3() {
+        WriteIndent2();
+        WriteIndent1();
+    }
+    void WriteIndent4() {
+        WriteIndent3();
+        WriteIndent1();
+    }
+    void WriteIndent5() {
+        WriteIndent4();
+        WriteIndent1();
+    }
+    void WriteIndent6() {
+        WriteIndent5();
+        WriteIndent1();
+    }
+
     void generateEnumContent(IEnumerable<(string, SyntaxKindKind)> k) {
         var tokens = k.Select((x, i) => ($"{x.Item1}", i ^ ((int)x.Item2 << 16))).ToList();
         var maxLength = tokens.Max(x => x.Item1.Length);
         tokens = tokens.Select(x => (x.Item1.PadRight(maxLength), x.Item2)).ToList();
         for (var i = 0; i < tokens.Count; i++) {
-            Write(indent);
-            Write(indent);
+            WriteIndent2();
             Write(tokens[i].Item1);
             Write(" = 0x");
             Write(tokens[i].Item2.ToString("x8"));
@@ -101,10 +123,7 @@ namespace QSPNet.Interpreter {
 
     var maxParseableNameLength = parseableTokens.Max(x => x.name.Length);
     foreach (var (name, text) in parseableTokens) {
-        Write(indent);
-        Write(indent);
-        Write(indent);
-        Write(indent);
+        WriteIndent4();
         Write("SyntaxTokenKind.");
         Write(name.PadRight(maxParseableNameLength));
         Write(" => \"");
@@ -121,10 +140,7 @@ namespace QSPNet.Interpreter {
 <#
     var maxOperatorNameLength = operatorTokens.Max(x => x.name.Length);
     foreach (var (name, _, _, unaryPrecedence) in operatorTokens.Where(x => x.unaryPrecedence > 0)) {
-        Write(indent);
-        Write(indent);
-        Write(indent);
-        Write(indent);
+        WriteIndent4();
         Write("SyntaxTokenKind.");
         Write(name.PadRight(maxOperatorNameLength));
         Write(" => 0x");
@@ -140,10 +156,7 @@ namespace QSPNet.Interpreter {
             kind switch {
 <#
     foreach (var (name, _, binaryPrecedence, _) in operatorTokens.Where(x => x.binaryPrecedence > 0)) {
-        Write(indent);
-        Write(indent);
-        Write(indent);
-        Write(indent);
+        WriteIndent4();
         Write("SyntaxTokenKind.");
         Write(name.PadRight(maxOperatorNameLength));
         Write(" => 0x");
@@ -152,26 +165,6 @@ namespace QSPNet.Interpreter {
     }
 #>
                 _ => 0
-            };
-    }
-
-    public static class LexerHelper {
-        public static SyntaxKind LexCharacter(char current) 
-            => current switch {
-<#
-    foreach (var (name, text) in parseableTokens) {
-        Write(indent);
-        Write(indent);
-        Write(indent);
-        Write(indent);
-        Write("'");
-        Write(text[0].ToString());
-        Write("' => SyntaxKind.");
-        Write(name);
-        WriteLine("Token,");
-    }
-#>
-                _ => SyntaxKind.UnknownToken
             };
     }
 }

@@ -23,7 +23,8 @@ namespace QSPNet.Interpreter {
             _position++;
             return Peek();
         }
-        private char Peek() => _position < _text.Length ? _text[_position] : Char.Null;
+        private char Peek(int ahead = 0) => _position + ahead < _text.Length ? _text[_position + ahead] : Char.Null;
+        private char Lookahead() => Peek(1);
         
         public SyntaxToken Next() {
             if (_position >= _text.Length)
@@ -53,12 +54,29 @@ namespace QSPNet.Interpreter {
             if (tryRead(char.IsWhiteSpace))
                 return new SyntaxToken(SyntaxKind.WhiteSpaceToken, start, _text.Substring(start, _position - start));
 
-            NextChar(); // consume one
-            var kind = LexerHelper.LexCharacter(current);
-            if (kind != SyntaxKind.UnknownToken)
-                return new SyntaxToken(kind, start, _text.Substring(start, 1));
             
-            return LexBadCharacter(start);
+            SyntaxToken token;
+            switch (current) {
+                case '+': token = new SyntaxToken(SyntaxKind.PlusToken, start, _text.Substring(start, 1)); break;
+                case '-': token = new SyntaxToken(SyntaxKind.MinusToken, start, _text.Substring(start, 1)); break;
+                case '*': token = new SyntaxToken(SyntaxKind.StarToken, start, _text.Substring(start, 1)); break;
+                case '/': token = new SyntaxToken(SyntaxKind.SlashToken, start, _text.Substring(start, 1)); break;
+                case '(': token = new SyntaxToken(SyntaxKind.OpenParenthesisToken, start, _text.Substring(start, 1)); break;
+                case ')': token = new SyntaxToken(SyntaxKind.CloseParenthesisToken, start, _text.Substring(start, 1)); break;
+                case 'M': case 'm':
+                    if (Lookahead() == 'O' || Lookahead() == 'o') {
+                        NextChar();
+                        if (Lookahead() == 'D' || Lookahead() == 'd') {
+                            NextChar();
+                            token = new SyntaxToken(SyntaxKind.ModToken, start, _text.Substring(start, 3));
+                            break;
+                        }
+                    }
+                    goto default;
+                default: token = LexBadCharacter(start); break;
+            }
+            NextChar(); // consume any
+            return token;
         }
 
         private SyntaxToken LexBadCharacter(int start) {
