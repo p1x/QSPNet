@@ -1,0 +1,183 @@
+﻿<#@ template language="C#" #>
+<#@ assembly name="System.Core" #>
+<#@ import namespace="System.Text" #>
+<#@ import namespace="System.Collections.Generic" #>
+<#@ import namespace="System.Linq" #>
+<#
+
+    var specialTokens = new[] {
+        "EndOfFile",
+        "Unknown"
+    };
+
+    var customParseTokens = new[] {
+        "WhiteSpace",
+        "Number"
+    };
+
+    var operatorTokens = new (string name, string text, int binaryPrecedence, int unaryPrecedence)[] {
+        ("Plus",  "+", 1, 1),
+        ("Minus", "-", 1, 1),
+        ("Star",  "*", 2, 0),
+        ("Slash", "/", 2, 0)
+    };
+    var nonOperatorTokens = new (string name, string text)[] {
+        ("OpenParenthesis", "("),
+        ("CloseParenthesis", ")")
+    };
+    var parseableTokens = operatorTokens.Select(x => (x.name, x.text)).Concat(nonOperatorTokens).ToList();
+    
+    var expressions = new[] {
+        "Number",
+        "Binary"
+    };
+
+    List<(string name, SyntaxKindKind kind)> kinds = Enumerable.Empty<(string, SyntaxKindKind)>()
+        .Concat(specialTokens.Select(x => (x, SyntaxKindKind.Token)))
+        .Concat(customParseTokens.Select(x => (x, SyntaxKindKind.Token)))
+        .Concat(parseableTokens.Select(x => (x.name, SyntaxKindKind.Token)))
+        .Concat(expressions.Select(x => (x, SyntaxKindKind.Expression)))
+        .ToList();
+
+    var indent = new string(' ', 4);
+
+    void generateEnumContent(IEnumerable<(string, SyntaxKindKind)> k) {
+        var tokens = k.Select((x, i) => ($"{x.Item1}", i ^ ((int)x.Item2 << 16))).ToList();
+        var maxLength = tokens.Max(x => x.Item1.Length);
+        tokens = tokens.Select(x => (x.Item1.PadRight(maxLength), x.Item2)).ToList();
+        for (var i = 0; i < tokens.Count; i++) {
+            Write(indent);
+            Write(indent);
+            Write(tokens[i].Item1);
+            Write(" = 0x");
+            Write(tokens[i].Item2.ToString("x8"));
+            WriteLine(",");
+        }
+    }
+
+    void generateEnums(SyntaxKindKind kind) {
+        WriteLine($"    public enum Syntax{kind}Kind {{");
+        generateEnumContent(kinds.Where(x => x.kind == kind));
+        WriteLine("    }");
+    } 
+
+#>
+namespace QSPNet.Interpreter {
+<#
+    generateEnums(SyntaxKindKind.Token);
+    generateEnums(SyntaxKindKind.Expression);
+#>
+    public enum SyntaxKind {
+<#
+    generateEnumContent(kinds.Select(x => (x.name + x.kind, x.kind)));
+#>
+    }
+
+    public static partial class SyntaxFacts {
+<#
+    foreach (var kindKind in Enum.GetValues(typeof(SyntaxKindKind))) {
+#>
+        public static bool Is<#= kindKind #>(this SyntaxKind kind) => ((int)kind & <#= (int)kindKind << 16 #>) > 0; 
+<#
+    }
+    
+    foreach (var kindKind in Enum.GetValues(typeof(SyntaxKindKind))) {
+#>
+        public static Syntax<#= kindKind #>Kind As<#= kindKind #>(this SyntaxKind kind) => (Syntax<#= kindKind #>Kind)(int)kind; 
+<#
+    }
+    
+    foreach (var kindKind in Enum.GetValues(typeof(SyntaxKindKind))) {
+#>
+        public static SyntaxKind AsSyntaxKind(this Syntax<#= kindKind #>Kind kind) => (SyntaxKind)(int)kind; 
+<#
+    }
+#>
+        public static string GetText(this SyntaxKind kind) => GetText(kind.AsToken());  
+        public static string GetText(this SyntaxTokenKind kind) =>
+            kind switch {
+<#
+
+    var maxParseableNameLength = parseableTokens.Max(x => x.name.Length);
+    foreach (var (name, text) in parseableTokens) {
+        Write(indent);
+        Write(indent);
+        Write(indent);
+        Write(indent);
+        Write("SyntaxTokenKind.");
+        Write(name.PadRight(maxParseableNameLength));
+        Write(" => \"");
+        Write(text);
+        WriteLine("\",");
+    }
+#>
+                _ => kind.ToString()
+            };
+        
+        public static int GetUnaryPrecedence(SyntaxKind kind) => GetUnaryPrecedence(kind.AsToken());
+        public static int GetUnaryPrecedence(SyntaxTokenKind kind) =>
+            kind switch {
+<#
+    var maxOperatorNameLength = operatorTokens.Max(x => x.name.Length);
+    foreach (var (name, text, binaryPrecedence, unaryPrecedence) in operatorTokens) {
+        Write(indent);
+        Write(indent);
+        Write(indent);
+        Write(indent);
+        Write("SyntaxTokenKind.");
+        Write(name.PadRight(maxOperatorNameLength));
+        Write(" => 0x");
+        Write((unaryPrecedence ^ (1 << 16)).ToString("x8"));
+        WriteLine(",");
+    }
+#>                
+                _ => 0
+            };
+
+        public static int GetBinaryPrecedence(SyntaxKind kind) => GetBinaryPrecedence(kind.AsToken());
+        public static int GetBinaryPrecedence(SyntaxTokenKind kind) =>
+            kind switch {
+<#
+    foreach (var (name, text, binaryPrecedence, unaryPrecedence) in operatorTokens) {
+        Write(indent);
+        Write(indent);
+        Write(indent);
+        Write(indent);
+        Write("SyntaxTokenKind.");
+        Write(name.PadRight(maxOperatorNameLength));
+        Write(" => 0x");
+        Write((binaryPrecedence).ToString("x8"));
+        WriteLine(",");
+    }
+#>                
+                _ => 0
+            };
+
+    }
+
+    public static class LexerHelper {
+        public static SyntaxKind LexCharacter(char current) 
+            => current switch {
+<#
+    foreach (var (name, text) in parseableTokens) {
+        Write(indent);
+        Write(indent);
+        Write(indent);
+        Write(indent);
+        Write("'");
+        Write(text[0].ToString());
+        Write("' => SyntaxKind.");
+        Write(name);
+        WriteLine("Token,");
+    }
+#>
+                _ => SyntaxKind.UnknownToken
+            };
+    }
+}
+<#+
+    private enum SyntaxKindKind {
+        Token = 0,
+        Expression = 1
+    }
+#>

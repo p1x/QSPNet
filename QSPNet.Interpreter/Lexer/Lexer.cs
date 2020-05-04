@@ -52,26 +52,19 @@ namespace QSPNet.Interpreter {
             }
             if (tryRead(char.IsWhiteSpace))
                 return new SyntaxToken(SyntaxKind.WhiteSpaceToken, start, _text.Substring(start, _position - start));
-            
+
             NextChar(); // consume one
-            switch (current) {
-                case '+':
-                    return new SyntaxToken(SyntaxKind.PlusToken, start, _text.Substring(start, 1));
-                case '-':
-                    return new SyntaxToken(SyntaxKind.MinusToken, start, _text.Substring(start, 1));
-                case '*':
-                    return new SyntaxToken(SyntaxKind.StarToken, start, _text.Substring(start, 1));
-                case '/':
-                    return new SyntaxToken(SyntaxKind.SlashToken, start, _text.Substring(start, 1));
-                case '(':
-                    return new SyntaxToken(SyntaxKind.OpenParenthesisToken, start, _text.Substring(start, 1));
-                case ')':
-                    return new SyntaxToken(SyntaxKind.CloseParenthesisToken, start, _text.Substring(start, 1));
-                default:
-                    var tokenText = _text.Substring(start, 1);
-                    _diagnostics.ReportBadCharacter(start, tokenText);
-                    return new SyntaxToken(SyntaxKind.Unknown, start, tokenText);
-            }
+            var kind = LexerHelper.LexCharacter(current);
+            if (kind != SyntaxKind.UnknownToken)
+                return new SyntaxToken(kind, start, _text.Substring(start, 1));
+            
+            return LexBadCharacter(start);
+        }
+
+        private SyntaxToken LexBadCharacter(int start) {
+            var tokenText = _text.Substring(start, 1);
+            _diagnostics.ReportBadCharacter(start, tokenText);
+            return new SyntaxToken(SyntaxKind.UnknownToken, start, tokenText);
         }
     }
 }

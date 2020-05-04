@@ -46,7 +46,7 @@
             do
                 token = lexer.Next();
             while (token.Kind == SyntaxKind.WhiteSpaceToken ||
-                   token.Kind == SyntaxKind.Unknown); 
+                   token.Kind == SyntaxKind.UnknownToken); 
 
             return token;
         }
