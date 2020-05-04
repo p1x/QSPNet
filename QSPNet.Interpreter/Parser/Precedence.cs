@@ -3,8 +3,8 @@
 namespace QSPNet.Interpreter {
     public readonly struct Precedence {
         public Precedence(int value) {
-            if (value <= 0)
-                throw new ArgumentOutOfRangeException(nameof(value), value, "Precedence value should be positive.");
+            if (value < 0)
+                throw new ArgumentOutOfRangeException(nameof(value), value, "Precedence value should be non-negative.");
             
             Value = value;
         }
