@@ -49,8 +49,8 @@
                 _ => kind.ToString()
             };
         
-        public static int GetUnaryPrecedence(SyntaxKind kind) => GetUnaryPrecedence(kind.AsToken());
-        public static int GetUnaryPrecedence(SyntaxTokenKind kind) =>
+        public static int GetUnaryPrecedence(this SyntaxKind kind) => GetUnaryPrecedence(kind.AsToken());
+        public static int GetUnaryPrecedence(this SyntaxTokenKind kind) =>
             kind switch {
                 SyntaxTokenKind.Plus  => 0x00010001,
                 SyntaxTokenKind.Minus => 0x00010001,
@@ -60,8 +60,8 @@
                 _ => 0
             };
 
-        public static int GetBinaryPrecedence(SyntaxKind kind) => GetBinaryPrecedence(kind.AsToken());
-        public static int GetBinaryPrecedence(SyntaxTokenKind kind) =>
+        public static int GetBinaryPrecedence(this SyntaxKind kind) => GetBinaryPrecedence(kind.AsToken());
+        public static int GetBinaryPrecedence(this SyntaxTokenKind kind) =>
             kind switch {
                 SyntaxTokenKind.Plus  => 0x00000001,
                 SyntaxTokenKind.Minus => 0x00000001,

@@ -114,8 +114,8 @@ namespace QSPNet.Interpreter {
                 _ => kind.ToString()
             };
         
-        public static int GetUnaryPrecedence(SyntaxKind kind) => GetUnaryPrecedence(kind.AsToken());
-        public static int GetUnaryPrecedence(SyntaxTokenKind kind) =>
+        public static int GetUnaryPrecedence(this SyntaxKind kind) => GetUnaryPrecedence(kind.AsToken());
+        public static int GetUnaryPrecedence(this SyntaxTokenKind kind) =>
             kind switch {
 <#
     var maxOperatorNameLength = operatorTokens.Max(x => x.name.Length);
@@ -134,8 +134,8 @@ namespace QSPNet.Interpreter {
                 _ => 0
             };
 
-        public static int GetBinaryPrecedence(SyntaxKind kind) => GetBinaryPrecedence(kind.AsToken());
-        public static int GetBinaryPrecedence(SyntaxTokenKind kind) =>
+        public static int GetBinaryPrecedence(this SyntaxKind kind) => GetBinaryPrecedence(kind.AsToken());
+        public static int GetBinaryPrecedence(this SyntaxTokenKind kind) =>
             kind switch {
 <#
     foreach (var (name, text, binaryPrecedence, unaryPrecedence) in operatorTokens) {
