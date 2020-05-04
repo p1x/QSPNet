@@ -13,7 +13,8 @@
     }
     public enum SyntaxExpressionKind {
         Number = 0x00010000,
-        Binary = 0x00010001,
+        Unary  = 0x00010001,
+        Binary = 0x00010002,
     }
     public enum SyntaxKind {
         EndOfFileToken        = 0x00000000,
@@ -27,7 +28,8 @@
         OpenParenthesisToken  = 0x00000008,
         CloseParenthesisToken = 0x00000009,
         NumberExpression      = 0x0001000a,
-        BinaryExpression      = 0x0001000b,
+        UnaryExpression       = 0x0001000b,
+        BinaryExpression      = 0x0001000c,
     }
 
     public static partial class SyntaxFacts {

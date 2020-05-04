@@ -29,6 +29,7 @@
     
     var expressions = new[] {
         "Number",
+        "Unary",
         "Binary"
     };
 
