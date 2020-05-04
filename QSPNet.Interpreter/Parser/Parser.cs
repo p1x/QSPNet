@@ -4,17 +4,29 @@
 
         protected override ExpressionSyntax ParseCore() => ParseExpression();
 
-        private ExpressionSyntax ParseExpression(int parentPrecedence = 0) {
-            var left = ParsePrimaryExpression();
+        private ExpressionSyntax ParseExpression(Precedence parentPrecedence = default) {
+            var left = ParseExpressionLeft(parentPrecedence);
 
-            while (Current.Kind == SyntaxKind.PlusToken ||
-                   Current.Kind == SyntaxKind.MinusToken) {
+            Precedence precedence;
+            while ((precedence = Current.Kind.GetBinaryPrecedence()) > parentPrecedence) {
                 var operatorToken = Next();
-                var right = ParsePrimaryExpression();
+                var right = ParseExpression(precedence);
                 left = new BinaryExpressionSyntax(left, operatorToken, right);
             }
 
             return left;
+        }
+
+        private ExpressionSyntax ParseExpressionLeft(Precedence parentPrecedence) {
+            // if current is unary operator (precedence > 0) and its precedence > parentPrecedence
+            var unaryPrecedence = Current.Kind.GetUnaryPrecedence();
+            if (unaryPrecedence > parentPrecedence) {
+                var operatorToken = Next();
+                var operand = ParseExpression(unaryPrecedence);
+                return new UnaryExpressionSyntax(operatorToken, operand);
+            }
+
+            return ParsePrimaryExpression();
         }
         
         private ExpressionSyntax ParsePrimaryExpression() {
