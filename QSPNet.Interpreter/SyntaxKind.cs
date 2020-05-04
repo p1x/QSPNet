@@ -54,9 +54,6 @@
             kind switch {
                 SyntaxTokenKind.Plus  => 0x00010001,
                 SyntaxTokenKind.Minus => 0x00010001,
-                SyntaxTokenKind.Star  => 0x00010000,
-                SyntaxTokenKind.Slash => 0x00010000,
-                
                 _ => 0
             };
 
@@ -67,10 +64,8 @@
                 SyntaxTokenKind.Minus => 0x00000001,
                 SyntaxTokenKind.Star  => 0x00000002,
                 SyntaxTokenKind.Slash => 0x00000002,
-                
                 _ => 0
             };
-
     }
 
     public static class LexerHelper {
