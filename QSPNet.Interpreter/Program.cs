@@ -61,9 +61,6 @@ namespace QSPNet.Interpreter {
         private static ReplOptions SwitchFlag(ReplOptions flag) => (_replOptions & flag) != 0 ? _replOptions & ~flag : _replOptions ^ flag;
 
         private static void Process(string line) {
-            if (line.EndsWith("\r\n"))
-                line = line.Substring(0, line.Length - 2);
-
             if(_replOptions.HasFlag(ReplOptions.PrintLexedTokens)) {
                 var lexer = new Lexer(line);
                 var tokens = lexer.Lex();

@@ -19,6 +19,9 @@
         Unary  = 0x00010001,
         Binary = 0x00010002,
     }
+    public enum SyntaxStatementKind {
+        Expression = 0x00020000,
+    }
     public enum SyntaxKind {
         EndOfFileToken        = 0x00000000,
         EndOfLineToken        = 0x00000001,
@@ -36,15 +39,19 @@
         NumberExpression      = 0x0001000d,
         UnaryExpression       = 0x0001000e,
         BinaryExpression      = 0x0001000f,
+        ExpressionStatement   = 0x00020010,
     }
 
     public static partial class SyntaxFacts {
         public static bool IsToken(this SyntaxKind kind) => ((int)kind & 0) > 0; 
         public static bool IsExpression(this SyntaxKind kind) => ((int)kind & 65536) > 0; 
+        public static bool IsStatement(this SyntaxKind kind) => ((int)kind & 131072) > 0; 
         public static SyntaxTokenKind AsToken(this SyntaxKind kind) => (SyntaxTokenKind)(int)kind; 
         public static SyntaxExpressionKind AsExpression(this SyntaxKind kind) => (SyntaxExpressionKind)(int)kind; 
+        public static SyntaxStatementKind AsStatement(this SyntaxKind kind) => (SyntaxStatementKind)(int)kind; 
         public static SyntaxKind AsSyntaxKind(this SyntaxTokenKind kind) => (SyntaxKind)(int)kind; 
         public static SyntaxKind AsSyntaxKind(this SyntaxExpressionKind kind) => (SyntaxKind)(int)kind; 
+        public static SyntaxKind AsSyntaxKind(this SyntaxStatementKind kind) => (SyntaxKind)(int)kind; 
         public static string GetText(this SyntaxKind kind) => GetText(kind.AsToken());  
         public static string GetText(this SyntaxTokenKind kind) =>
             kind switch {

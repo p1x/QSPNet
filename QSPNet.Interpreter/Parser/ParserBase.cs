@@ -16,14 +16,14 @@
         }
         
         public (SyntaxTree syntaxTree, DiagnosticBag diagnostics) Parse() {
-            var expression = ParseCore();
+            var statement = ParseCore();
             var endOfFileToken = Match(SyntaxKind.EndOfFileToken);
-            var syntaxTree = new SyntaxTree(_text, expression, endOfFileToken);
+            var syntaxTree = new SyntaxTree(_text, statement, endOfFileToken);
             var diagnostics = _lexer.GetDiagnostics().With(_diagnostics);
             return (syntaxTree, diagnostics);
         }
 
-        protected abstract ExpressionSyntax ParseCore();
+        protected abstract StatementSyntax ParseCore();
 
         private static SyntaxToken FilterNext(Lexer lexer) {
             SyntaxToken token;

@@ -1,13 +1,22 @@
-﻿namespace QSPNet.Interpreter {
-    public class Evaluator {
-        private readonly ExpressionSyntax _expression;
+﻿using System;
 
-        public Evaluator(ExpressionSyntax expression) {
-            _expression = expression;
+namespace QSPNet.Interpreter {
+    public class Evaluator {
+        private readonly StatementSyntax _statement;
+
+        public Evaluator(StatementSyntax expression) {
+            _statement = expression;
         }
 
-        public object Evaluate() => EvaluateExpression(_expression);
+        public object Evaluate() =>
+            _statement switch {
+                ExpressionStatementSyntax e => EvaluateExpressionStatement(e),
+                _ => throw new ArgumentOutOfRangeException()
+            };
 
+        private object EvaluateExpressionStatement(ExpressionStatementSyntax syntax) =>
+            EvaluateExpression(syntax.Expression);
+        
         private object EvaluateExpression(ExpressionSyntax expression) =>
             expression switch {
                 NumberExpressionSyntax n => EvaluateNumberExpression(n),

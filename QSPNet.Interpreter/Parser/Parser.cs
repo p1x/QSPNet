@@ -2,8 +2,14 @@
     public class Parser : ParserBase {
         public Parser(string text) : base(text) { }
 
-        protected override ExpressionSyntax ParseCore() => ParseExpression();
+        protected override StatementSyntax ParseCore() => ParseStatement();
 
+        private StatementSyntax ParseStatement() {
+            var expression = ParseExpression();
+            var eol = Match(SyntaxKind.EndOfLineToken);
+            return new ExpressionStatementSyntax(expression, eol);
+        }
+        
         private ExpressionSyntax ParseExpression(Precedence parentPrecedence = default) {
             var left = ParseExpressionLeft(parentPrecedence);
 
