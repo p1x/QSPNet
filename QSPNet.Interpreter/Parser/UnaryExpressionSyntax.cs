@@ -1,16 +1,19 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 namespace QSPNet.Interpreter {
     public class UnaryExpressionSyntax : ExpressionSyntax {
         public UnaryExpressionSyntax(SyntaxToken @operator, ExpressionSyntax operand) {
-            Operator = @operator;
-            Operand = operand;
+            Operator = @operator ?? throw new ArgumentNullException(nameof(@operator));
+            Operand = operand ?? throw new ArgumentNullException(nameof(operand));
         }
+
+        public override SyntaxKind Kind => SyntaxKind.UnaryExpression;
         
         public SyntaxToken Operator { get; }
-        public ExpressionSyntax Operand { get; }
         
-        public override SyntaxKind Kind => SyntaxKind.UnaryExpression;
+        public ExpressionSyntax Operand { get; }
+
         public override IEnumerable<object> GetChildren() {
             yield return Operator;
             yield return Operand;

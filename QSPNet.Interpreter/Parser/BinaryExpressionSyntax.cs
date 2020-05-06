@@ -1,21 +1,26 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 namespace QSPNet.Interpreter {
     public class BinaryExpressionSyntax : ExpressionSyntax {
         public BinaryExpressionSyntax(ExpressionSyntax left, SyntaxToken @operator, ExpressionSyntax right) {
-            Left = left;
-            Operator = @operator;
-            Right = right;
+            Left = left ?? throw new ArgumentNullException(nameof(left));
+            Operator = @operator ?? throw new ArgumentNullException(nameof(@operator));
+            Right = right ?? throw new ArgumentNullException(nameof(right));
         }
+        
         public override SyntaxKind Kind => SyntaxKind.BinaryExpression;
+
+        public ExpressionSyntax Left { get; }
+
+        public SyntaxToken Operator { get; }
+
+        public ExpressionSyntax Right { get; }
+
         public override IEnumerable<object> GetChildren() {
             yield return Left;
             yield return Operator;
             yield return Right;
         }
-
-        public ExpressionSyntax Left { get; }
-        public SyntaxToken Operator { get; }
-        public ExpressionSyntax Right { get; }
     }
 }
