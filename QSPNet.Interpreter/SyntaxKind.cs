@@ -1,16 +1,18 @@
 ﻿﻿namespace QSPNet.Interpreter {
     public enum SyntaxTokenKind {
         EndOfFile        = 0x00000000,
-        Unknown          = 0x00000001,
-        WhiteSpace       = 0x00000002,
-        Number           = 0x00000003,
-        Plus             = 0x00000004,
-        Minus            = 0x00000005,
-        Mod              = 0x00000006,
-        Star             = 0x00000007,
-        Slash            = 0x00000008,
-        OpenParenthesis  = 0x00000009,
-        CloseParenthesis = 0x0000000a,
+        EndOfLine        = 0x00000001,
+        Unknown          = 0x00000002,
+        WhiteSpace       = 0x00000003,
+        Number           = 0x00000004,
+        Plus             = 0x00000005,
+        Minus            = 0x00000006,
+        Mod              = 0x00000007,
+        Star             = 0x00000008,
+        Slash            = 0x00000009,
+        OpenParenthesis  = 0x0000000a,
+        CloseParenthesis = 0x0000000b,
+        ContinueLine     = 0x0000000c,
     }
     public enum SyntaxExpressionKind {
         Number = 0x00010000,
@@ -19,19 +21,21 @@
     }
     public enum SyntaxKind {
         EndOfFileToken        = 0x00000000,
-        UnknownToken          = 0x00000001,
-        WhiteSpaceToken       = 0x00000002,
-        NumberToken           = 0x00000003,
-        PlusToken             = 0x00000004,
-        MinusToken            = 0x00000005,
-        ModToken              = 0x00000006,
-        StarToken             = 0x00000007,
-        SlashToken            = 0x00000008,
-        OpenParenthesisToken  = 0x00000009,
-        CloseParenthesisToken = 0x0000000a,
-        NumberExpression      = 0x0001000b,
-        UnaryExpression       = 0x0001000c,
-        BinaryExpression      = 0x0001000d,
+        EndOfLineToken        = 0x00000001,
+        UnknownToken          = 0x00000002,
+        WhiteSpaceToken       = 0x00000003,
+        NumberToken           = 0x00000004,
+        PlusToken             = 0x00000005,
+        MinusToken            = 0x00000006,
+        ModToken              = 0x00000007,
+        StarToken             = 0x00000008,
+        SlashToken            = 0x00000009,
+        OpenParenthesisToken  = 0x0000000a,
+        CloseParenthesisToken = 0x0000000b,
+        ContinueLineToken     = 0x0000000c,
+        NumberExpression      = 0x0001000d,
+        UnaryExpression       = 0x0001000e,
+        BinaryExpression      = 0x0001000f,
     }
 
     public static partial class SyntaxFacts {
@@ -51,6 +55,7 @@
                 SyntaxTokenKind.Slash            => "/",
                 SyntaxTokenKind.OpenParenthesis  => "(",
                 SyntaxTokenKind.CloseParenthesis => ")",
+                SyntaxTokenKind.ContinueLine     => "_",
                 _ => kind.ToString()
             };
         

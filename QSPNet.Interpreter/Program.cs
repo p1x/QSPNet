@@ -1,17 +1,22 @@
 ﻿using System;
+using System.Text;
 
 namespace QSPNet.Interpreter {
     static class Program {
         private static ReplOptions _replOptions = ReplOptions.None;
         
         private static void Main(string[] args) {
+            var text = new StringBuilder();
             while (true) {
-                Console.Write("> ");
+                if(text.Length == 0)
+                    Console.Write("> ");
+                else
+                    Console.Write("· ");
 
                 var line = Console.ReadLine();
                 if (line == null)
                     continue;
-                
+
                 if (line.StartsWith('/')) {
                     switch (line.ToUpperInvariant()) {
                         case "/Q":
@@ -43,7 +48,12 @@ namespace QSPNet.Interpreter {
                             break;
                     }    
                 } else {
-                    Process(line);
+                    text.AppendLine(line);
+                    if (line.EndsWith(" _"))
+                        continue;
+
+                    Process(text.ToString());
+                    text.Clear();
                 }
             }
         }
@@ -51,6 +61,9 @@ namespace QSPNet.Interpreter {
         private static ReplOptions SwitchFlag(ReplOptions flag) => (_replOptions & flag) != 0 ? _replOptions & ~flag : _replOptions ^ flag;
 
         private static void Process(string line) {
+            if (line.EndsWith("\r\n"))
+                line = line.Substring(0, line.Length - 2);
+
             if(_replOptions.HasFlag(ReplOptions.PrintLexedTokens)) {
                 var lexer = new Lexer(line);
                 var tokens = lexer.Lex();

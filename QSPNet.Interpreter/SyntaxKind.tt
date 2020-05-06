@@ -7,6 +7,7 @@
 
     var specialTokens = new[] {
         "EndOfFile",
+        "EndOfLine",
         "Unknown"
     };
 
@@ -24,7 +25,8 @@
     };
     var nonOperatorTokens = new (string name, string text)[] {
         ("OpenParenthesis", "("),
-        ("CloseParenthesis", ")")
+        ("CloseParenthesis", ")"),
+        ("ContinueLine", "_")
     };
     var parseableTokens = operatorTokens.Select(x => (x.name, x.text)).Concat(nonOperatorTokens).ToList();
     

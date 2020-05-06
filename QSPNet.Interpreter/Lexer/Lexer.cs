@@ -1,11 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+using System.Diagnostics.Contracts;
 
 namespace QSPNet.Interpreter {
     public class Lexer {
         private readonly LexerDiagnosticBag _diagnostics = new LexerDiagnosticBag();
         private readonly string _text;
         private int _position;
+        private SyntaxToken? _currentToken;
         
         public Lexer(string text) {
             _text = text;
@@ -17,72 +18,108 @@ namespace QSPNet.Interpreter {
                 yield return token;
         }
 
-        public LexerDiagnosticBag GetDiagnostics() => _diagnostics; 
-        
-        private char NextChar() {
-            _position++;
-            return Peek();
-        }
+        public LexerDiagnosticBag GetDiagnostics() => _diagnostics;
+
+        [Pure]
         private char Peek(int ahead = 0) => _position + ahead < _text.Length ? _text[_position + ahead] : Char.Null;
-        private char Lookahead() => Peek(1);
-        
-        public SyntaxToken Next() {
-            if (_position >= _text.Length)
-                return new SyntaxToken(SyntaxKind.EndOfFileToken, _text.Length, Char.NullString);
-            
-            var start = _position;
-            var current = Peek();
 
-            bool tryRead(Predicate<char> predicate) {
-                if (!predicate(current))
-                    return false;
-                
-                do
-                    current = NextChar();
-                while (predicate(current) && !Char.IsNull(current));
-                return true;
-            }
+        public SyntaxToken Next() => _currentToken = NextToken();
 
-            if (tryRead(char.IsDigit)) {
-                var tokenText = _text.Substring(start, _position - start);
-                if (int.TryParse(tokenText, out var value))
-                    return new SyntaxToken(SyntaxKind.NumberToken, start, tokenText, value);
-
-                _diagnostics.ReportInvalidInteger(start, tokenText);
-                return SyntaxToken.Manufacture(SyntaxKind.NumberToken, start);
-            }
-            if (tryRead(char.IsWhiteSpace))
-                return new SyntaxToken(SyntaxKind.WhiteSpaceToken, start, _text.Substring(start, _position - start));
-
-            
-            SyntaxToken token;
-            switch (current) {
-                case '+': token = new SyntaxToken(SyntaxKind.PlusToken, start, _text.Substring(start, 1)); break;
-                case '-': token = new SyntaxToken(SyntaxKind.MinusToken, start, _text.Substring(start, 1)); break;
-                case '*': token = new SyntaxToken(SyntaxKind.StarToken, start, _text.Substring(start, 1)); break;
-                case '/': token = new SyntaxToken(SyntaxKind.SlashToken, start, _text.Substring(start, 1)); break;
-                case '(': token = new SyntaxToken(SyntaxKind.OpenParenthesisToken, start, _text.Substring(start, 1)); break;
-                case ')': token = new SyntaxToken(SyntaxKind.CloseParenthesisToken, start, _text.Substring(start, 1)); break;
+        private SyntaxToken NextToken() {
+            switch (Peek()) {
+                case Char.Null:
+                    return ConsumeNullChar();
+                case '+':
+                    return ConsumeSingleCharToken(SyntaxKind.PlusToken, _position);
+                case '-':
+                    return ConsumeSingleCharToken(SyntaxKind.MinusToken, _position);
+                case '*':
+                    return ConsumeSingleCharToken(SyntaxKind.StarToken, _position);
+                case '/':
+                    return ConsumeSingleCharToken(SyntaxKind.SlashToken, _position);
+                case '(':
+                    return ConsumeSingleCharToken(SyntaxKind.OpenParenthesisToken, _position);
+                case ')':
+                    return ConsumeSingleCharToken(SyntaxKind.CloseParenthesisToken, _position);
                 case 'M': case 'm':
-                    if (Lookahead() == 'O' || Lookahead() == 'o') {
-                        NextChar();
-                        if (Lookahead() == 'D' || Lookahead() == 'd') {
-                            NextChar();
-                            token = new SyntaxToken(SyntaxKind.ModToken, start, _text.Substring(start, 3));
-                            break;
-                        }
-                    }
-                    goto default;
-                default: token = LexBadCharacter(start); break;
+                    return TryConsumeModOperator(_position) ?? ConsumeBadCharacter(_position);
+                case '_':
+                    return TryConsumeContinueLineToken(_position) ?? ConsumeBadCharacter(_position);
+                case ' ':
+                    return ConsumeWhiteSpaceToken(_position);
+                case '\r':
+                    return TryConsumeEndOfLineToken(_position) ?? ConsumeBadCharacter(_position);
+                case '0': case '1': case '2': case '3': case '4':
+                case '5': case '6': case '7': case '8': case '9':
+                    return ConsumeNumberToken(_position);
+                default:
+                    return ConsumeBadCharacter(_position);
             }
-            NextChar(); // consume any
-            return token;
         }
 
-        private SyntaxToken LexBadCharacter(int start) {
-            var tokenText = _text.Substring(start, 1);
+        private SyntaxToken ConsumeNullChar() {
+            _position++;
+            return new SyntaxToken(SyntaxKind.EndOfFileToken, _text.Length, Char.NullString);
+        }
+
+        private SyntaxToken ConsumeSingleCharToken(SyntaxKind kind, int start) {
+            _position++;
+            return new SyntaxToken(kind, start, GetCurrentTokenText(start));
+        }
+
+        private SyntaxToken ConsumeWhiteSpaceToken(int start) {
+            do
+                _position++;
+            while (_position < _text.Length && _text[_position] == ' ');
+            
+            return new SyntaxToken(SyntaxKind.WhiteSpaceToken, start, GetCurrentTokenText(start));
+        }
+
+        private SyntaxToken ConsumeNumberToken(int start) {
+            do
+                _position++;
+            while (_position < _text.Length && char.IsDigit(_text[_position]));
+            
+            var tokenText = GetCurrentTokenText(start);
+            if (int.TryParse(tokenText, out var value))
+                return new SyntaxToken(SyntaxKind.NumberToken, start, tokenText, value);
+
+            _diagnostics.ReportInvalidInteger(start, tokenText);
+            return SyntaxToken.Manufacture(SyntaxKind.NumberToken, start);
+        }
+
+        private SyntaxToken? TryConsumeModOperator(int start) {
+            if (Peek(1) != 'O' && Peek(1) != 'o' ||
+                Peek(2) != 'D' && Peek(2) != 'd')
+                return null;
+            
+            _position += 3;
+            return new SyntaxToken(SyntaxKind.ModToken, start, GetCurrentTokenText(start));
+        }
+
+        private SyntaxToken? TryConsumeContinueLineToken(int start) {
+            if (_currentToken?.Text != " " || Peek(1) != '\r' || Peek(2) != '\n')
+                return null;
+            
+            _position += 3;
+            return new SyntaxToken(SyntaxKind.WhiteSpaceToken, start, GetCurrentTokenText(start));
+        }
+
+        private SyntaxToken? TryConsumeEndOfLineToken(int start) {
+            if (Peek(1) != '\n')
+                return null;
+            
+            _position += 2;
+            return new SyntaxToken(SyntaxKind.EndOfLineToken, start, GetCurrentTokenText(start));
+        }
+        
+        private SyntaxToken ConsumeBadCharacter(int start) {
+            _position++;
+            var tokenText = GetCurrentTokenText(start);
             _diagnostics.ReportBadCharacter(start, tokenText);
             return new SyntaxToken(SyntaxKind.UnknownToken, start, tokenText);
         }
+
+        private string GetCurrentTokenText(int start) => _text.Substring(start, _position - start);
     }
 }
