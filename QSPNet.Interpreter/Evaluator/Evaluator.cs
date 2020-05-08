@@ -20,10 +20,14 @@ namespace QSPNet.Interpreter {
         private object EvaluateExpression(ExpressionSyntax expression) =>
             expression switch {
                 NumberExpressionSyntax n => EvaluateNumberExpression(n),
-                BinaryExpressionSyntax b => EvaluateBinaryExpression(b),
                 UnaryExpressionSyntax  u => EvaluateUnaryExpression(u),
+                BinaryExpressionSyntax b => EvaluateBinaryExpression(b),
+                NameExpressionSyntax  nn => EvaluateNameExpression(nn),
                 _ => string.Empty
             };
+
+        private static object EvaluateNumberExpression(NumberExpressionSyntax n) => 
+            n.Token.Value!;
 
         private object EvaluateUnaryExpression(UnaryExpressionSyntax u) =>
             u.Operator.Kind switch {
@@ -45,7 +49,8 @@ namespace QSPNet.Interpreter {
             };
         }
 
-        private static object EvaluateNumberExpression(NumberExpressionSyntax n) => 
-            n.Token.Value!;
+        private object EvaluateNameExpression(NameExpressionSyntax n) {
+            return 0; // TODO we don't have assignment now 
+        }
     }
 }

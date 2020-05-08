@@ -1,4 +1,6 @@
-﻿namespace QSPNet.Interpreter {
+using System.Collections.Generic;
+
+namespace QSPNet.Interpreter {
     public class Parser : ParserBase {
         public Parser(string text) : base(text) { }
 
@@ -36,8 +38,10 @@
         }
         
         private ExpressionSyntax ParsePrimaryExpression() {
-            var token = Match(SyntaxKind.NumberToken);
-            return new NumberExpressionSyntax(token);
+            if (Current.Kind == SyntaxKind.NumberToken)
+                return new NumberExpressionSyntax(Match(SyntaxKind.NumberToken));
+
+            return new NameExpressionSyntax(Match(SyntaxKind.IdentifierToken));
         }
     }
 }

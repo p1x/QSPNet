@@ -13,7 +13,8 @@
 
     var customParseTokens = new[] {
         "WhiteSpace",
-        "Number"
+        "Number",
+        "Identifier"
     };
 
     var operatorTokens = new (string name, string text, int binaryPrecedence, int unaryPrecedence)[] {
@@ -33,7 +34,8 @@
     var expressions = new[] {
         "Number",
         "Unary",
-        "Binary"
+        "Binary",
+        "Name"
     };
 
     var statements = new[] {

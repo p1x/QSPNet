@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 
 namespace QSPNet.Interpreter {
@@ -26,7 +26,8 @@ namespace QSPNet.Interpreter {
         public SyntaxToken Next() => _currentToken = NextToken();
 
         private SyntaxToken NextToken() {
-            switch (Peek()) {
+            var current = Peek();
+            switch (current) {
                 case Char.Null:
                     return ConsumeNullChar();
                 case '+':
@@ -42,9 +43,9 @@ namespace QSPNet.Interpreter {
                 case ')':
                     return ConsumeSingleCharToken(SyntaxKind.CloseParenthesisToken, _position);
                 case 'M': case 'm':
-                    return TryConsumeModOperator(_position) ?? ConsumeBadCharacter(_position);
+                    return TryConsumeModOperator(_position) ?? ConsumeIdentifier(_position);
                 case '_':
-                    return TryConsumeContinueLineToken(_position) ?? ConsumeBadCharacter(_position);
+                    return TryConsumeContinueLineToken(_position) ?? ConsumeIdentifier(_position);
                 case ' ':
                     return ConsumeWhiteSpaceToken(_position);
                 case '\r':
@@ -53,7 +54,9 @@ namespace QSPNet.Interpreter {
                 case '5': case '6': case '7': case '8': case '9':
                     return ConsumeNumberToken(_position);
                 default:
-                    return ConsumeBadCharacter(_position);
+                    return char.IsLetter(current) 
+                        ? ConsumeIdentifier(_position)
+                        : ConsumeBadCharacter(_position);
             }
         }
 
@@ -86,6 +89,14 @@ namespace QSPNet.Interpreter {
 
             _diagnostics.ReportInvalidInteger(start, tokenText);
             return SyntaxToken.Manufacture(SyntaxKind.NumberToken, start);
+        }
+
+        private SyntaxToken ConsumeIdentifier(int start) {
+            do
+                _position++;
+            while (_position < _text.Length && (char.IsLetter(_text[_position]) || _text[_position] == '_'));
+            
+            return new SyntaxToken(SyntaxKind.IdentifierToken, start, GetCurrentTokenText(start));
         }
 
         private SyntaxToken? TryConsumeModOperator(int start) {
