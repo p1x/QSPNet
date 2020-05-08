@@ -29,7 +29,8 @@
             SyntaxToken token;
             do
                 token = lexer.Next();
-            while (token.Kind == SyntaxKind.WhiteSpaceToken); 
+            while (token.Kind == SyntaxKind.WhiteSpaceToken ||
+                   token.Kind == SyntaxKind.ContinueLineToken); 
 
             return token;
         }

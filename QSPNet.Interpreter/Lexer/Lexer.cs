@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 
 namespace QSPNet.Interpreter {
@@ -102,7 +102,7 @@ namespace QSPNet.Interpreter {
                 return null;
             
             _position += 3;
-            return new SyntaxToken(SyntaxKind.WhiteSpaceToken, start, GetCurrentTokenText(start));
+            return new SyntaxToken(SyntaxKind.ContinueLineToken, start, GetCurrentTokenText(start));
         }
 
         private SyntaxToken? TryConsumeEndOfLineToken(int start) {
@@ -112,7 +112,7 @@ namespace QSPNet.Interpreter {
             _position += 2;
             return new SyntaxToken(SyntaxKind.EndOfLineToken, start, GetCurrentTokenText(start));
         }
-        
+
         private SyntaxToken ConsumeBadCharacter(int start) {
             _position++;
             var tokenText = GetCurrentTokenText(start);
