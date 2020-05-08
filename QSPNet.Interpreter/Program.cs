@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Text;
 
 namespace QSPNet.Interpreter {
@@ -7,6 +8,7 @@ namespace QSPNet.Interpreter {
         
         private static void Main(string[] args) {
             var text = new StringBuilder();
+            var variables = new Dictionary<string, object>();
             while (true) {
                 if(text.Length == 0)
                     Console.Write("> ");
@@ -52,7 +54,7 @@ namespace QSPNet.Interpreter {
                     if (line.EndsWith(" _"))
                         continue;
 
-                    Process(text.ToString());
+                    Process(text.ToString(), variables);
                     text.Clear();
                 }
             }
@@ -60,7 +62,7 @@ namespace QSPNet.Interpreter {
 
         private static ReplOptions SwitchFlag(ReplOptions flag) => (_replOptions & flag) != 0 ? _replOptions & ~flag : _replOptions ^ flag;
 
-        private static void Process(string line) {
+        private static void Process(string line, Dictionary<string, object> variables) {
             if(_replOptions.HasFlag(ReplOptions.PrintLexedTokens)) {
                 var lexer = new Lexer(line);
                 var tokens = lexer.Lex();
@@ -96,9 +98,17 @@ namespace QSPNet.Interpreter {
                 PrintDiagnostics(d);
 
             if (diagnostics.Count == 0) {
-                var evaluator = new Evaluator(syntaxTree.Root);
+                var evaluator = new Evaluator(syntaxTree.Root, variables);
                 var result = evaluator.Evaluate();
-                Console.WriteLine(result);
+
+                switch (result) {
+                    case VariableChangeResult v:
+                        variables[v.VariableName] = v.Value;
+                        break;
+                    default:
+                        Console.WriteLine(result.Value);
+                        break;
+                }
             }
         }
 

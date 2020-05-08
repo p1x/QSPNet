@@ -1,17 +1,30 @@
-using System.Collections.Generic;
-
-namespace QSPNet.Interpreter {
+﻿namespace QSPNet.Interpreter {
     public class Parser : ParserBase {
         public Parser(string text) : base(text) { }
 
         protected override StatementSyntax ParseCore() => ParseStatement();
 
         private StatementSyntax ParseStatement() {
-            var expression = ParseExpression();
-            var eol = Match(SyntaxKind.EndOfLineToken);
-            return new ExpressionStatementSyntax(expression, eol);
+            if (Current.Kind == SyntaxKind.IdentifierToken && Lookahead.Kind == SyntaxKind.EqualsToken)
+                return ParseAssignmentStatement();
+
+            return ParseExpressionStatement();
         }
-        
+
+        private StatementSyntax ParseAssignmentStatement() {
+            var identifierToken = Match(SyntaxKind.IdentifierToken);
+            var equalsToken     = Match(SyntaxKind.EqualsToken);
+            var expression      = ParseExpression();
+            var endOfLineToken  = Match(SyntaxKind.EndOfLineToken);
+            return new AssignmentStatementSyntax(identifierToken, equalsToken, expression, endOfLineToken);
+        }
+
+        private StatementSyntax ParseExpressionStatement() {
+            var expression     = ParseExpression();
+            var endOfLineToken = Match(SyntaxKind.EndOfLineToken);
+            return new ExpressionStatementSyntax(expression, endOfLineToken);
+        }
+
         private ExpressionSyntax ParseExpression(Precedence parentPrecedence = default) {
             var left = ParseExpressionLeft(parentPrecedence);
 

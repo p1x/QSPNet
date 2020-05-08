@@ -18,16 +18,17 @@
     };
 
     var operatorTokens = new (string name, string text, int binaryPrecedence, int unaryPrecedence)[] {
-        ("Plus",  "+", 1, 1),
-        ("Minus", "-", 1, 1),
-        ("Mod", "MOD", 2, 0),
-        ("Star",  "*", 3, 0),
-        ("Slash", "/", 3, 0),
+        ("Equals", "=", 1, 0),
+        ("Plus",   "+", 2, 1),
+        ("Minus",  "-", 2, 1),
+        ("Mod",  "MOD", 3, 0),
+        ("Star",   "*", 4, 0),
+        ("Slash",  "/", 4, 0),
     };
     var nonOperatorTokens = new (string name, string text)[] {
-        ("OpenParenthesis", "("),
+        ("OpenParenthesis",  "("),
         ("CloseParenthesis", ")"),
-        ("ContinueLine", "_")
+        ("ContinueLine",     "_")
     };
     var parseableTokens = operatorTokens.Select(x => (x.name, x.text)).Concat(nonOperatorTokens).ToList();
     
@@ -39,7 +40,8 @@
     };
 
     var statements = new[] {
-        "Expression"
+        "Expression",
+        "Assignment"
     };
 
     List<(string name, SyntaxKindKind kind)> kinds = Enumerable.Empty<(string, SyntaxKindKind)>()

@@ -51,5 +51,6 @@
         }
 
         protected SyntaxToken Current => _current;
+        protected SyntaxToken Lookahead => _next;
     }
 }

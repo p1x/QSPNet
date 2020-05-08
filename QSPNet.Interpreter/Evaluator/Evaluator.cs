@@ -1,22 +1,34 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace QSPNet.Interpreter {
     public class Evaluator {
         private readonly StatementSyntax _statement;
-
-        public Evaluator(StatementSyntax expression) {
+        private readonly Dictionary<string, object> _variables;
+        
+        public Evaluator(StatementSyntax expression, Dictionary<string, object> variables) {
             _statement = expression;
+            _variables = variables;
         }
 
-        public object Evaluate() =>
+        public EvaluationResult Evaluate() =>
             _statement switch {
                 ExpressionStatementSyntax e => EvaluateExpressionStatement(e),
+                AssignmentStatementSyntax a => EvaluateAssignmentStatement(a),
                 _ => throw new ArgumentOutOfRangeException()
             };
 
-        private object EvaluateExpressionStatement(ExpressionStatementSyntax syntax) =>
-            EvaluateExpression(syntax.Expression);
-        
+        private EvaluationResult EvaluateExpressionStatement(ExpressionStatementSyntax syntax) {
+            var value = EvaluateExpression(syntax.Expression);
+            return new EvaluationResult(value);
+        }
+
+        private EvaluationResult EvaluateAssignmentStatement(AssignmentStatementSyntax syntax) {
+            var variableName = syntax.IdentifierToken.Text;
+            var value = EvaluateExpression(syntax.Expression);
+            return new VariableChangeResult(variableName, value);
+        }
+
         private object EvaluateExpression(ExpressionSyntax expression) =>
             expression switch {
                 NumberExpressionSyntax n => EvaluateNumberExpression(n),
@@ -50,7 +62,7 @@ namespace QSPNet.Interpreter {
         }
 
         private object EvaluateNameExpression(NameExpressionSyntax n) {
-            return 0; // TODO we don't have assignment now 
+            return _variables[n.Identifier.Text];
         }
     }
 }

@@ -38,6 +38,8 @@ namespace QSPNet.Interpreter {
                     return ConsumeSingleCharToken(SyntaxKind.StarToken, _position);
                 case '/':
                     return ConsumeSingleCharToken(SyntaxKind.SlashToken, _position);
+                case '=':
+                    return ConsumeSingleCharToken(SyntaxKind.EqualsToken, _position);
                 case '(':
                     return ConsumeSingleCharToken(SyntaxKind.OpenParenthesisToken, _position);
                 case ')':
