@@ -7,8 +7,8 @@ namespace QSPNet.Interpreter {
             Token = token ?? throw new ArgumentNullException(nameof(token));
         }
         
-        public override SyntaxKind Kind => SyntaxKind.NumberExpression;
-
+        public override SyntaxExpressionKind ExpressionKind => SyntaxExpressionKind.Number;
+        
         public SyntaxToken Token { get; }
 
         public override IEnumerable<object> GetChildren() {

@@ -4,12 +4,13 @@ using System.Collections.Generic;
 namespace QSPNet.Interpreter {
     public class BinaryExpressionSyntax : ExpressionSyntax {
         public BinaryExpressionSyntax(ExpressionSyntax left, SyntaxToken @operator, ExpressionSyntax right) {
+            
             Left = left ?? throw new ArgumentNullException(nameof(left));
             Operator = @operator ?? throw new ArgumentNullException(nameof(@operator));
             Right = right ?? throw new ArgumentNullException(nameof(right));
         }
-        
-        public override SyntaxKind Kind => SyntaxKind.BinaryExpression;
+
+        public override SyntaxExpressionKind ExpressionKind => SyntaxExpressionKind.Binary;
 
         public ExpressionSyntax Left { get; }
 

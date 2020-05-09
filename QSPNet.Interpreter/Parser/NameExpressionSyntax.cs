@@ -6,8 +6,8 @@ namespace QSPNet.Interpreter {
             Identifier = identifier;
         }
 
-        public override SyntaxKind Kind => SyntaxKind.NameExpression;
-        
+        public override SyntaxExpressionKind ExpressionKind => SyntaxExpressionKind.Name;
+
         public SyntaxToken Identifier { get; }
         
         public override IEnumerable<object> GetChildren() {

@@ -8,7 +8,7 @@ namespace QSPNet.Interpreter {
             Operand = operand ?? throw new ArgumentNullException(nameof(operand));
         }
 
-        public override SyntaxKind Kind => SyntaxKind.UnaryExpression;
+        public override SyntaxExpressionKind ExpressionKind => SyntaxExpressionKind.Unary;
         
         public SyntaxToken Operator { get; }
         

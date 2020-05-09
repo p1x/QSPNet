@@ -6,6 +6,10 @@ namespace QSPNet.Interpreter {
         protected StatementSyntax(SyntaxToken endOfLineToken) {
             EndOfLineToken = endOfLineToken ?? throw new ArgumentNullException(nameof(endOfLineToken));
         }
+
+        public override SyntaxKind Kind => StatementKind.AsSyntaxKind();
+
+        public abstract SyntaxStatementKind StatementKind { get; }
         
         public SyntaxToken EndOfLineToken { get; }
 

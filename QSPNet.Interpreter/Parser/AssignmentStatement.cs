@@ -15,7 +15,7 @@ namespace QSPNet.Interpreter {
             Expression = expression  ?? throw new ArgumentNullException(nameof(expression));
         }
 
-        public override SyntaxKind Kind => SyntaxKind.AssignmentStatement;
+        public override SyntaxStatementKind StatementKind => SyntaxStatementKind.Assignment;
         
         public SyntaxToken IdentifierToken { get; }
         

@@ -7,7 +7,7 @@ namespace QSPNet.Interpreter {
             Expression = expression ?? throw new ArgumentNullException(nameof(expression));
         }
 
-        public override SyntaxKind Kind { get; } = SyntaxKind.ExpressionStatement;
+        public override SyntaxStatementKind StatementKind { get; } = SyntaxStatementKind.Expression;
         
         public ExpressionSyntax Expression { get; }
 
