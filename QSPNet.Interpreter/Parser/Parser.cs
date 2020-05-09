@@ -50,11 +50,11 @@
             return ParsePrimaryExpression();
         }
         
-        private ExpressionSyntax ParsePrimaryExpression() {
-            if (Current.Kind == SyntaxTokenKind.Number)
-                return new NumberExpressionSyntax(Match(SyntaxTokenKind.Number));
-
-            return new NameExpressionSyntax(Match(SyntaxTokenKind.Identifier));
-        }
+        private ExpressionSyntax ParsePrimaryExpression() =>
+            Current.Kind switch {
+                SyntaxTokenKind.Number => new LiteralExpressionSyntax(Match(SyntaxTokenKind.Number)),
+                SyntaxTokenKind.String => new LiteralExpressionSyntax(Match(SyntaxTokenKind.String)),
+                _ => new NameExpressionSyntax(Match(SyntaxTokenKind.Identifier))
+            };
     }
 }

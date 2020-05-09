@@ -15,7 +15,7 @@
         ("Name", new[] {
             ("Identifier", MemberType.Token, false),
         }),
-        ("Number", new[] {
+        ("Literal", new[] {
             ("Token", MemberType.Token, false),
         })
     };

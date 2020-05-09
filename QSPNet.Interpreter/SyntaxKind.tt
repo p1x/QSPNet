@@ -34,7 +34,7 @@
     var parseableTokens = operatorTokens.Select(x => (x.name, x.text)).Concat(nonOperatorTokens).ToList();
     
     var expressions = new[] {
-        "Number",
+        "Literal",
         "Unary",
         "Binary",
         "Name"
@@ -45,12 +45,13 @@
         "Assignment"
     };
 
-    List<(string name, SyntaxKindKind kind)> kinds = Enumerable.Empty<(string, SyntaxKindKind)>()
+    List<(string name, SyntaxKindKind kind, int id)> kinds = Enumerable.Empty<(string, SyntaxKindKind)>()
         .Concat(specialTokens.Select(x => (x, SyntaxKindKind.Token)))
         .Concat(customParseTokens.Select(x => (x, SyntaxKindKind.Token)))
         .Concat(parseableTokens.Select(x => (x.name, SyntaxKindKind.Token)))
         .Concat(expressions.Select(x => (x, SyntaxKindKind.Expression)))
         .Concat(statements.Select(x => (x, SyntaxKindKind.Statement)))
+        .Select((x, i) => (x.Item1, x.Item2, i ^ ((int)x.Item2 << 16)))
         .ToList();
 
     var indent = new string(' ', 4);
@@ -77,8 +78,8 @@
         WriteIndent1();
     }
 
-    void generateEnumContent(IEnumerable<(string, SyntaxKindKind)> k) {
-        var tokens = k.Select((x, i) => ($"{x.Item1}", i ^ ((int)x.Item2 << 16))).ToList();
+    void generateEnumContent(IEnumerable<(string, SyntaxKindKind, int)> k) {
+        var tokens = k.Select((x, i) => (x.Item1, x.Item3)).ToList();
         var maxLength = tokens.Max(x => x.Item1.Length);
         tokens = tokens.Select(x => (x.Item1.PadRight(maxLength), x.Item2)).ToList();
         for (var i = 0; i < tokens.Count; i++) {
@@ -105,7 +106,7 @@ namespace QSPNet.Interpreter {
 #>
     public enum SyntaxKind {
 <#
-    generateEnumContent(kinds.Select(x => (x.name + x.kind, x.kind)));
+    generateEnumContent(kinds.Select(x => (x.name + x.kind, x.kind, x.id)));
 #>
     }
 

@@ -18,14 +18,14 @@
         ContinueLine     = 0x0000000f,
     }
     public enum SyntaxExpressionKind {
-        Number = 0x00010000,
-        Unary  = 0x00010001,
-        Binary = 0x00010002,
-        Name   = 0x00010003,
+        Literal = 0x00010010,
+        Unary   = 0x00010011,
+        Binary  = 0x00010012,
+        Name    = 0x00010013,
     }
     public enum SyntaxStatementKind {
-        Expression = 0x00020000,
-        Assignment = 0x00020001,
+        Expression = 0x00020014,
+        Assignment = 0x00020015,
     }
     public enum SyntaxKind {
         EndOfFileToken        = 0x00000000,
@@ -44,7 +44,7 @@
         OpenParenthesisToken  = 0x0000000d,
         CloseParenthesisToken = 0x0000000e,
         ContinueLineToken     = 0x0000000f,
-        NumberExpression      = 0x00010010,
+        LiteralExpression     = 0x00010010,
         UnaryExpression       = 0x00010011,
         BinaryExpression      = 0x00010012,
         NameExpression        = 0x00010013,

@@ -50,12 +50,12 @@ namespace QSPNet.Interpreter {
                 yield return Identifier;
             }   
         }
-        public class NumberExpressionSyntax : ExpressionSyntax {
-            public NumberExpressionSyntax(SyntaxToken token) {
+        public class LiteralExpressionSyntax : ExpressionSyntax {
+            public LiteralExpressionSyntax(SyntaxToken token) {
                 Token = token ?? throw new ArgumentNullException(nameof(token)); 
             }
 
-            public override SyntaxExpressionKind ExpressionKind => SyntaxExpressionKind.Number;
+            public override SyntaxExpressionKind ExpressionKind => SyntaxExpressionKind.Literal;
 
             public SyntaxToken Token { get; }
 

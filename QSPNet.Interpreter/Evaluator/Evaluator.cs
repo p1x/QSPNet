@@ -31,15 +31,19 @@ namespace QSPNet.Interpreter {
 
         private object EvaluateExpression(ExpressionSyntax expression) =>
             expression switch {
-                NumberExpressionSyntax n => EvaluateNumberExpression(n),
-                UnaryExpressionSyntax  u => EvaluateUnaryExpression(u),
-                BinaryExpressionSyntax b => EvaluateBinaryExpression(b),
-                NameExpressionSyntax  nn => EvaluateNameExpression(nn),
+                LiteralExpressionSyntax l => EvaluateLiteralExpression(l),
+                UnaryExpressionSyntax   u => EvaluateUnaryExpression(u),
+                BinaryExpressionSyntax  b => EvaluateBinaryExpression(b),
+                NameExpressionSyntax    n => EvaluateNameExpression(n),
                 _ => string.Empty
             };
 
-        private static object EvaluateNumberExpression(NumberExpressionSyntax n) => 
-            n.Token.Value!;
+        private static object EvaluateLiteralExpression(LiteralExpressionSyntax n) =>
+            n.Token.Value switch {
+                int _ => n.Token.Value,
+                string _ => n.Token.Value,
+                _ => throw new NotSupportedException("Literals other then numbers and strings are not supported.")
+            };
 
         private object EvaluateUnaryExpression(UnaryExpressionSyntax u) =>
             u.Operator.Kind switch {
