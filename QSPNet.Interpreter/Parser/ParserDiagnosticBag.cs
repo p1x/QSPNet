@@ -6,7 +6,7 @@
 
         public ParserDiagnosticBag() : base(ParserCode) { }
 
-        public void ReportUnexpectedToken(SyntaxKind expectedKind, SyntaxToken actualToken) => 
+        public void ReportUnexpectedToken(SyntaxTokenKind expectedKind, SyntaxToken actualToken) => 
             Report(UnexpectedToken, actualToken.Position, actualToken.Text, $"Unexpected token '{{0}}' at position {{1}}. Expecting '{expectedKind.GetText()}'.");
     }
 }

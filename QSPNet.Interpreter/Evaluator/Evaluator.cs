@@ -43,8 +43,8 @@ namespace QSPNet.Interpreter {
 
         private object EvaluateUnaryExpression(UnaryExpressionSyntax u) =>
             u.Operator.Kind switch {
-                SyntaxKind.PlusToken => EvaluateExpression(u.Operand),
-                SyntaxKind.MinusToken => -(int)EvaluateExpression(u.Operand),
+                SyntaxTokenKind.Plus => EvaluateExpression(u.Operand),
+                SyntaxTokenKind.Minus => -(int)EvaluateExpression(u.Operand),
                 _ => string.Empty
             };
 
@@ -52,11 +52,11 @@ namespace QSPNet.Interpreter {
             var left = EvaluateExpression(b.Left);
             var right = EvaluateExpression(b.Right);
             return b.Operator.Kind switch {
-                SyntaxKind.PlusToken => (int)left + (int)right,
-                SyntaxKind.MinusToken => (int)left - (int)right,
-                SyntaxKind.SlashToken => (int)left / (int)right,
-                SyntaxKind.StarToken => (int)left * (int)right,
-                SyntaxKind.ModToken => (int)left % (int)right,
+                SyntaxTokenKind.Plus => (int)left + (int)right,
+                SyntaxTokenKind.Minus => (int)left - (int)right,
+                SyntaxTokenKind.Slash => (int)left / (int)right,
+                SyntaxTokenKind.Star => (int)left * (int)right,
+                SyntaxTokenKind.Mod => (int)left % (int)right,
                 _ => string.Empty
             };
         }

@@ -17,7 +17,7 @@
         
         public (SyntaxTree syntaxTree, DiagnosticBag diagnostics) Parse() {
             var statement = ParseCore();
-            var endOfFileToken = Match(SyntaxKind.EndOfFileToken);
+            var endOfFileToken = Match(SyntaxTokenKind.EndOfFile);
             var syntaxTree = new SyntaxTree(_text, statement, endOfFileToken);
             var diagnostics = _lexer.GetDiagnostics().With(_diagnostics);
             return (syntaxTree, diagnostics);
@@ -29,8 +29,8 @@
             SyntaxToken token;
             do
                 token = lexer.Next();
-            while (token.Kind == SyntaxKind.WhiteSpaceToken ||
-                   token.Kind == SyntaxKind.ContinueLineToken); 
+            while (token.Kind == SyntaxTokenKind.WhiteSpace ||
+                   token.Kind == SyntaxTokenKind.ContinueLine); 
 
             return token;
         }
@@ -42,7 +42,7 @@
             return current;
         }
 
-        protected SyntaxToken Match(SyntaxKind kind) {
+        protected SyntaxToken Match(SyntaxTokenKind kind) {
             if (_current.Kind == kind)
                 return Next();
 

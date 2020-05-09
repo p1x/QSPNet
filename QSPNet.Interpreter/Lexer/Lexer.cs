@@ -14,7 +14,7 @@ namespace QSPNet.Interpreter {
 
         public IEnumerable<SyntaxToken> Lex() {
             SyntaxToken token;
-            while ((token = Next()).Kind != SyntaxKind.EndOfFileToken)
+            while ((token = Next()).Kind != SyntaxTokenKind.EndOfFile)
                 yield return token;
         }
 
@@ -31,19 +31,19 @@ namespace QSPNet.Interpreter {
                 case Char.Null:
                     return ConsumeNullChar();
                 case '+':
-                    return ConsumeSingleCharToken(SyntaxKind.PlusToken, _position);
+                    return ConsumeSingleCharToken(SyntaxTokenKind.Plus, _position);
                 case '-':
-                    return ConsumeSingleCharToken(SyntaxKind.MinusToken, _position);
+                    return ConsumeSingleCharToken(SyntaxTokenKind.Minus, _position);
                 case '*':
-                    return ConsumeSingleCharToken(SyntaxKind.StarToken, _position);
+                    return ConsumeSingleCharToken(SyntaxTokenKind.Star, _position);
                 case '/':
-                    return ConsumeSingleCharToken(SyntaxKind.SlashToken, _position);
+                    return ConsumeSingleCharToken(SyntaxTokenKind.Slash, _position);
                 case '=':
-                    return ConsumeSingleCharToken(SyntaxKind.EqualsToken, _position);
+                    return ConsumeSingleCharToken(SyntaxTokenKind.Equals, _position);
                 case '(':
-                    return ConsumeSingleCharToken(SyntaxKind.OpenParenthesisToken, _position);
+                    return ConsumeSingleCharToken(SyntaxTokenKind.OpenParenthesis, _position);
                 case ')':
-                    return ConsumeSingleCharToken(SyntaxKind.CloseParenthesisToken, _position);
+                    return ConsumeSingleCharToken(SyntaxTokenKind.CloseParenthesis, _position);
                 case 'M': case 'm':
                     return TryConsumeModOperator(_position) ?? ConsumeIdentifier(_position);
                 case '_':
@@ -64,10 +64,10 @@ namespace QSPNet.Interpreter {
 
         private SyntaxToken ConsumeNullChar() {
             _position++;
-            return new SyntaxToken(SyntaxKind.EndOfFileToken, _text.Length, Char.NullString);
+            return new SyntaxToken(SyntaxTokenKind.EndOfFile, _text.Length, Char.NullString);
         }
 
-        private SyntaxToken ConsumeSingleCharToken(SyntaxKind kind, int start) {
+        private SyntaxToken ConsumeSingleCharToken(SyntaxTokenKind kind, int start) {
             _position++;
             return new SyntaxToken(kind, start, GetCurrentTokenText(start));
         }
@@ -77,7 +77,7 @@ namespace QSPNet.Interpreter {
                 _position++;
             while (_position < _text.Length && _text[_position] == ' ');
             
-            return new SyntaxToken(SyntaxKind.WhiteSpaceToken, start, GetCurrentTokenText(start));
+            return new SyntaxToken(SyntaxTokenKind.WhiteSpace, start, GetCurrentTokenText(start));
         }
 
         private SyntaxToken ConsumeNumberToken(int start) {
@@ -87,10 +87,10 @@ namespace QSPNet.Interpreter {
             
             var tokenText = GetCurrentTokenText(start);
             if (int.TryParse(tokenText, out var value))
-                return new SyntaxToken(SyntaxKind.NumberToken, start, tokenText, value);
+                return new SyntaxToken(SyntaxTokenKind.Number, start, tokenText, value);
 
             _diagnostics.ReportInvalidInteger(start, tokenText);
-            return SyntaxToken.Manufacture(SyntaxKind.NumberToken, start);
+            return SyntaxToken.Manufacture(SyntaxTokenKind.Number, start);
         }
 
         private SyntaxToken ConsumeIdentifier(int start) {
@@ -98,7 +98,7 @@ namespace QSPNet.Interpreter {
                 _position++;
             while (_position < _text.Length && (char.IsLetter(_text[_position]) || _text[_position] == '_'));
             
-            return new SyntaxToken(SyntaxKind.IdentifierToken, start, GetCurrentTokenText(start));
+            return new SyntaxToken(SyntaxTokenKind.Identifier, start, GetCurrentTokenText(start));
         }
 
         private SyntaxToken? TryConsumeModOperator(int start) {
@@ -107,7 +107,7 @@ namespace QSPNet.Interpreter {
                 return null;
             
             _position += 3;
-            return new SyntaxToken(SyntaxKind.ModToken, start, GetCurrentTokenText(start));
+            return new SyntaxToken(SyntaxTokenKind.Mod, start, GetCurrentTokenText(start));
         }
 
         private SyntaxToken? TryConsumeContinueLineToken(int start) {
@@ -115,7 +115,7 @@ namespace QSPNet.Interpreter {
                 return null;
             
             _position += 3;
-            return new SyntaxToken(SyntaxKind.ContinueLineToken, start, GetCurrentTokenText(start));
+            return new SyntaxToken(SyntaxTokenKind.ContinueLine, start, GetCurrentTokenText(start));
         }
 
         private SyntaxToken? TryConsumeEndOfLineToken(int start) {
@@ -123,14 +123,14 @@ namespace QSPNet.Interpreter {
                 return null;
             
             _position += 2;
-            return new SyntaxToken(SyntaxKind.EndOfLineToken, start, GetCurrentTokenText(start));
+            return new SyntaxToken(SyntaxTokenKind.EndOfLine, start, GetCurrentTokenText(start));
         }
 
         private SyntaxToken ConsumeBadCharacter(int start) {
             _position++;
             var tokenText = GetCurrentTokenText(start);
             _diagnostics.ReportBadCharacter(start, tokenText);
-            return new SyntaxToken(SyntaxKind.UnknownToken, start, tokenText);
+            return new SyntaxToken(SyntaxTokenKind.Unknown, start, tokenText);
         }
 
         private string GetCurrentTokenText(int start) => _text.Substring(start, _position - start);

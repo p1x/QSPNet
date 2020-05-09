@@ -5,23 +5,23 @@
         protected override StatementSyntax ParseCore() => ParseStatement();
 
         private StatementSyntax ParseStatement() {
-            if (Current.Kind == SyntaxKind.IdentifierToken && Lookahead.Kind == SyntaxKind.EqualsToken)
+            if (Current.Kind == SyntaxTokenKind.Identifier && Lookahead.Kind == SyntaxTokenKind.Equals)
                 return ParseAssignmentStatement();
 
             return ParseExpressionStatement();
         }
 
         private StatementSyntax ParseAssignmentStatement() {
-            var identifierToken = Match(SyntaxKind.IdentifierToken);
-            var equalsToken     = Match(SyntaxKind.EqualsToken);
+            var identifierToken = Match(SyntaxTokenKind.Identifier);
+            var equalsToken     = Match(SyntaxTokenKind.Equals);
             var expression      = ParseExpression();
-            var endOfLineToken  = Match(SyntaxKind.EndOfLineToken);
+            var endOfLineToken  = Match(SyntaxTokenKind.EndOfLine);
             return new AssignmentStatementSyntax(identifierToken, equalsToken, expression, endOfLineToken);
         }
 
         private StatementSyntax ParseExpressionStatement() {
             var expression     = ParseExpression();
-            var endOfLineToken = Match(SyntaxKind.EndOfLineToken);
+            var endOfLineToken = Match(SyntaxTokenKind.EndOfLine);
             return new ExpressionStatementSyntax(expression, endOfLineToken);
         }
 
@@ -51,10 +51,10 @@
         }
         
         private ExpressionSyntax ParsePrimaryExpression() {
-            if (Current.Kind == SyntaxKind.NumberToken)
-                return new NumberExpressionSyntax(Match(SyntaxKind.NumberToken));
+            if (Current.Kind == SyntaxTokenKind.Number)
+                return new NumberExpressionSyntax(Match(SyntaxTokenKind.Number));
 
-            return new NameExpressionSyntax(Match(SyntaxKind.IdentifierToken));
+            return new NameExpressionSyntax(Match(SyntaxTokenKind.Identifier));
         }
     }
 }

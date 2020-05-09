@@ -2,8 +2,8 @@
 
 namespace QSPNet.Interpreter {
     public class SyntaxToken {
-        public SyntaxToken(SyntaxKind kind, int position, string text, object value) : this(kind, position) {
-            if (!kind.HasValue())
+        public SyntaxToken(SyntaxTokenKind kind, int position, string text, object value) : this(kind, position) {
+            if (!kind.AsSyntaxKind().HasValue())
                 throw new AggregateException($"Token with kind '{kind}' can't contain value.");
             if (string.IsNullOrEmpty(text))
                 throw new ArgumentException("Token text cannot be null or empty.", nameof(text));
@@ -12,15 +12,15 @@ namespace QSPNet.Interpreter {
             Text = text;
         }
         
-        public SyntaxToken(SyntaxKind kind, int position, string text) : this(kind, position) {
-            if (kind.HasValue())
+        public SyntaxToken(SyntaxTokenKind kind, int position, string text) : this(kind, position) {
+            if (kind.AsSyntaxKind().HasValue())
                 throw new AggregateException($"Token with kind '{kind}' should contain value.");
             if (string.IsNullOrEmpty(text))
                 throw new ArgumentException("Token text cannot be null or empty.", nameof(text));
             Text = text;
         }
 
-        private SyntaxToken(SyntaxKind kind, int position) {
+        private SyntaxToken(SyntaxTokenKind kind, int position) {
             if (position < 0)
                 throw new ArgumentOutOfRangeException(nameof(position));
             
@@ -29,13 +29,13 @@ namespace QSPNet.Interpreter {
             Text = string.Empty;
         }
 
-        public static SyntaxToken Manufacture(SyntaxKind kind, int position) => new SyntaxToken(kind, position);
+        public static SyntaxToken Manufacture(SyntaxTokenKind kind, int position) => new SyntaxToken(kind, position);
         
         public bool IsManufactured => string.IsNullOrEmpty(Text);
         
         public override string ToString() => $"{Kind}:{Position} '{Text}'";
 
-        public SyntaxKind Kind { get; }
+        public SyntaxTokenKind Kind { get; }
         public int Position { get; }
         public string Text { get; }
 
