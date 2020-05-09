@@ -55,14 +55,24 @@ namespace QSPNet.Interpreter {
         private object EvaluateBinaryExpression(BinaryExpressionSyntax b) {
             var left = EvaluateExpression(b.Left);
             var right = EvaluateExpression(b.Right);
-            return b.Operator.Kind switch {
-                SyntaxTokenKind.Plus => (int)left + (int)right,
-                SyntaxTokenKind.Minus => (int)left - (int)right,
-                SyntaxTokenKind.Slash => (int)left / (int)right,
-                SyntaxTokenKind.Star => (int)left * (int)right,
-                SyntaxTokenKind.Mod => (int)left % (int)right,
-                _ => string.Empty
-            };
+
+            if ((left  is int leftInt  || int.TryParse(left.ToString(),  out leftInt)) &&
+                (right is int rightInt || int.TryParse(right.ToString(), out rightInt))) {
+
+                return b.Operator.Kind switch {
+                    SyntaxTokenKind.Plus => (int)leftInt + (int)rightInt,
+                    SyntaxTokenKind.Minus => (int)leftInt - (int)rightInt,
+                    SyntaxTokenKind.Slash => (int)leftInt / (int)rightInt,
+                    SyntaxTokenKind.Star => (int)leftInt * (int)rightInt,
+                    SyntaxTokenKind.Mod => (int)leftInt % (int)rightInt,
+                    _ => string.Empty
+                };
+            }
+            
+            if (left is string || right is string && b.Operator.Kind == SyntaxTokenKind.Plus)
+                return string.Concat(left, right);
+
+            throw new NotSupportedException();
         }
 
         private object EvaluateNameExpression(NameExpressionSyntax n) {
