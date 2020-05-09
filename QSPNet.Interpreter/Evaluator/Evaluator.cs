@@ -24,7 +24,7 @@ namespace QSPNet.Interpreter {
         }
 
         private EvaluationResult EvaluateAssignmentStatement(AssignmentStatementSyntax syntax) {
-            var variableName = syntax.IdentifierToken.Text;
+            var variableName = syntax.Identifier.Text;
             var value = EvaluateExpression(syntax.Expression);
             return new VariableChangeResult(variableName, value);
         }

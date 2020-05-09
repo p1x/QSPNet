@@ -1,0 +1,139 @@
+﻿<#@ template language="C#" #>
+<#@ assembly name="System.Core" #>
+<#@ import namespace="System.Linq" #>
+<#
+    var expressions = new (string name, (string name, MemberType type, bool isOptional)[] members)[] {
+        ("Binary", new[] {
+            ("Left", MemberType.Expression, false),
+            ("Operator", MemberType.Token, false),
+            ("Right", MemberType.Expression, false),
+        }),
+        ("Unary", new[] {
+            ("Operator", MemberType.Token, false),
+            ("Operand", MemberType.Expression, false),
+        }),
+        ("Name", new[] {
+            ("Identifier", MemberType.Token, false),
+        }),
+        ("Number", new[] {
+            ("Token", MemberType.Token, false),
+        })
+    };
+    var statements = new (string name, (string name, MemberType type, bool isOptional)[] members)[] {
+        ("Expression", new[] {
+            ("Expression", MemberType.Expression, false),
+        }),
+        ("Assignment", new[] {
+            ("Identifier", MemberType.Token, false),
+            ("Equals", MemberType.Token, false),
+            ("Expression", MemberType.Expression, false),
+        })
+    };
+#>
+using System;
+using System.Collections.Generic;
+
+namespace QSPNet.Interpreter {
+<#
+    foreach (var e in expressions) {
+        var ctorParams = e.members.Select(x => GetTypeName(x.type) + " " + ToLocalName(x.name));
+        var ctorParamsStr = string.Join(", ", ctorParams);
+#>
+        public class <#= e.name #>ExpressionSyntax : ExpressionSyntax {
+            public <#= e.name #>ExpressionSyntax(<#= ctorParamsStr #>) {
+<#
+            foreach (var (name, _, isOptional) in e.members) {
+#>
+                <#= name #> = <#= ToLocalName(name) #><#= isOptional ? string.Empty : $" ?? throw new ArgumentNullException(nameof({ToLocalName(name)}))" #>; 
+<#
+            }
+#>
+            }
+
+            public override SyntaxExpressionKind ExpressionKind => SyntaxExpressionKind.<#= e.name #>;
+
+<#
+            foreach (var (name, type, _) in e.members) {
+#>
+            public <#= GetTypeName(type) #> <#= name #> { get; }
+<#
+            }
+#>
+
+            public override IEnumerable<object> GetChildren() {
+<#
+            foreach (var (name, _, _) in e.members) {
+#>
+                yield return <#= name #>;
+<#
+            }
+#>
+            }   
+        }
+<#
+    }
+    
+    foreach (var s in statements) {
+        var ctorParams = s.members.Select(x => GetTypeName(x.type) + " " + ToLocalName(x.name));
+        var ctorParamsStr = string.Join(", ", ctorParams);
+#>
+        public class <#= s.name #>StatementSyntax : StatementSyntax {
+            public <#= s.name #>StatementSyntax(<#= ctorParamsStr #>, SyntaxToken endOfLineToken) : base(endOfLineToken) {
+<#
+            foreach (var (name, _, isOptional) in s.members) {
+#>
+                <#= name #> = <#= ToLocalName(name) #><#= isOptional ? string.Empty : $" ?? throw new ArgumentNullException(nameof({ToLocalName(name)}))" #>; 
+<#
+            }
+#>
+            }
+
+            public override SyntaxStatementKind StatementKind => SyntaxStatementKind.<#= s.name #>;
+
+<#
+            foreach (var (name, type, _) in s.members) {
+#>
+            public <#= GetTypeName(type) #> <#= name #> { get; }
+<#
+            }
+#>
+
+            public override IEnumerable<object> GetChildren() {
+<#
+            foreach (var (name, _, _) in s.members) {
+#>
+                yield return <#= name #>;
+<#
+            }
+#>
+                foreach (var child in base.GetChildren())
+                    yield return child;
+            }   
+        }
+<#
+    }
+#>
+}
+
+<#+
+    private string ToLocalName(string name) {
+        var localName = name.Substring(1).Insert(0, char.ToLower(name[0]).ToString());
+        if (localName == "operator")
+            return "@" + localName;
+        return localName;
+    }
+
+    private string GetTypeName(MemberType type) =>
+        type switch {
+            MemberType.Expression => "ExpressionSyntax",
+            MemberType.Statement => "StatementSyntax",
+            MemberType.Token => "SyntaxToken",
+            _ => throw new Exception()
+        };
+
+    private enum MemberType {
+        Expression,
+        Statement,
+        Token
+    }
+#>

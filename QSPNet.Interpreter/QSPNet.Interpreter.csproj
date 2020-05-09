@@ -11,11 +11,20 @@
       <Generator>TextTemplatingFileGenerator</Generator>
       <LastGenOutput>SyntaxKind.cs</LastGenOutput>
     </None>
+    <None Update="Parser\SyntaxNodes.tt">
+      <Generator>TextTemplatingFileGenerator</Generator>
+      <LastGenOutput>SyntaxNodes.cs</LastGenOutput>
+    </None>
   </ItemGroup>
 
   <ItemGroup>
     <Compile Update="SyntaxKind.cs">
       <DependentUpon>SyntaxKind.tt</DependentUpon>
+    </Compile>
+    <Compile Update="Parser\SyntaxNodes.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>SyntaxNodes.tt</DependentUpon>
     </Compile>
   </ItemGroup>
 
