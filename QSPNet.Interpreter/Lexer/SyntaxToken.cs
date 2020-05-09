@@ -3,7 +3,7 @@
 namespace QSPNet.Interpreter {
     public class SyntaxToken {
         public SyntaxToken(SyntaxTokenKind kind, int position, string text, object value) : this(kind, position) {
-            if (!kind.AsSyntaxKind().HasValue())
+            if (!kind.HasValue())
                 throw new AggregateException($"Token with kind '{kind}' can't contain value.");
             if (string.IsNullOrEmpty(text))
                 throw new ArgumentException("Token text cannot be null or empty.", nameof(text));
@@ -13,7 +13,7 @@ namespace QSPNet.Interpreter {
         }
         
         public SyntaxToken(SyntaxTokenKind kind, int position, string text) : this(kind, position) {
-            if (kind.AsSyntaxKind().HasValue())
+            if (kind.HasValue())
                 throw new AggregateException($"Token with kind '{kind}' should contain value.");
             if (string.IsNullOrEmpty(text))
                 throw new ArgumentException("Token text cannot be null or empty.", nameof(text));
