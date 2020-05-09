@@ -7,6 +7,7 @@ namespace QSPNet.Interpreter {
         
         public const int BadCharacter = 1;
         public const int InvalidInteger = 2;
+        public const int UnterminatedString = 3;
 
         public LexerDiagnosticBag() : base(LexerCode) { }
 
@@ -15,5 +16,8 @@ namespace QSPNet.Interpreter {
 
         public void ReportInvalidInteger(int position, string text) => 
             Report(InvalidInteger, position, text, "Number '{0}' at position {1} is not a valid integer.");
+
+        public void ReportUnterminatedString(int position, string text) => 
+            Report(UnterminatedString, position, text, "Unterminated string literal '{0}' at position {1}.");
     }
 }

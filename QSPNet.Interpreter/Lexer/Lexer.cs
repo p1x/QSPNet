@@ -1,5 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Diagnostics.Contracts;
+using System.Text;
+using System.Text.RegularExpressions;
 
 namespace QSPNet.Interpreter {
     public class Lexer {
@@ -48,15 +50,17 @@ namespace QSPNet.Interpreter {
                     return TryConsumeModOperator(_position) ?? ConsumeIdentifier(_position);
                 case '_':
                     return TryConsumeContinueLineToken(_position) ?? ConsumeIdentifier(_position);
-                case ' ':
-                    return ConsumeWhiteSpaceToken(_position);
                 case '\r':
                     return TryConsumeEndOfLineToken(_position) ?? ConsumeBadCharacter(_position);
+                case ' ':
+                    return ConsumeWhiteSpaceToken(_position);
                 case '0': case '1': case '2': case '3': case '4':
                 case '5': case '6': case '7': case '8': case '9':
                     return ConsumeNumberToken(_position);
+                case '\'': case '"':
+                    return ConsumeStringToken(_position);
                 default:
-                    return char.IsLetter(current) 
+                    return char.IsLetter(current)
                         ? ConsumeIdentifier(_position)
                         : ConsumeBadCharacter(_position);
             }
@@ -91,6 +95,33 @@ namespace QSPNet.Interpreter {
 
             _diagnostics.ReportInvalidInteger(start, tokenText);
             return SyntaxToken.Manufacture(SyntaxTokenKind.Number, start);
+        }
+
+        private SyntaxToken ConsumeStringToken(int start) {
+            var startChar = _text[_position];
+            var builder = new StringBuilder();
+            
+            while (true) {
+                _position++;
+
+                if (_position >= _text.Length) {
+                    _diagnostics.ReportUnterminatedString(start, GetCurrentTokenText(start));
+                    break;
+                }
+
+                if (_text[_position] == startChar) {
+                    _position++;
+                    if (_text[_position] == startChar)
+                        builder.Append(startChar);
+                    else
+                        break;
+                } else {
+                    builder.Append(_text[_position]);
+                }
+            }
+            
+            var value = builder.ToString();
+            return new SyntaxToken(SyntaxTokenKind.String, start, GetCurrentTokenText(start), value);
         }
 
         private SyntaxToken ConsumeIdentifier(int start) {
