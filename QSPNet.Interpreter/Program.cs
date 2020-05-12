@@ -5,7 +5,7 @@ using System.Text;
 namespace QSPNet.Interpreter {
     static class Program {
         private static ReplOptions _replOptions = ReplOptions.None;
-        
+
         private static void Main(string[] args) {
             var text = new StringBuilder();
             var variables = new Dictionary<string, object>();
@@ -16,7 +16,7 @@ namespace QSPNet.Interpreter {
                     Console.Write("· ");
 
                 var line = Console.ReadLine();
-                if (line == null)
+                if (string.IsNullOrEmpty(line))
                     continue;
 
                 if (line.StartsWith('/')) {
@@ -45,17 +45,22 @@ namespace QSPNet.Interpreter {
                                 : $"#{ConsoleColor.Red}#disabled#RESET#";
                             ColoredConsole.WriteLine($"Printing syntax tree {printSyntaxString}.");
                             break;
+                        case "/R":
+                        case "/RUN":
+                            Process(text.ToString(), variables);
+                            variables.Clear();
+                            break;
+                        case "/RS":
+                        case "/RESET":
+                            variables.Clear();
+                            text.Clear();
+                            break;
                         default:
                             Console.Error.WriteLine($"Unknown command: {line}.");
                             break;
                     }    
                 } else {
                     text.AppendLine(line);
-                    if (line.EndsWith(" _"))
-                        continue;
-
-                    Process(text.ToString(), variables);
-                    text.Clear();
                 }
             }
         }
