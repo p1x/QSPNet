@@ -64,9 +64,15 @@ namespace QSPNet.Interpreter {
             u.Operator.Kind switch {
                 SyntaxTokenKind.Plus => EvaluateExpression(u.Operand),
                 SyntaxTokenKind.Minus => -(int)EvaluateExpression(u.Operand),
+                SyntaxTokenKind.Input => EvaluateInput(EvaluateExpression(u.Operand)),
                 _ => string.Empty
             };
 
+        private object EvaluateInput(object message) {
+            Console.WriteLine(message);
+            return Console.ReadLine();
+        }
+        
         private object EvaluateBinaryExpression(BinaryExpressionSyntax b) {
             var left = EvaluateExpression(b.Left);
             var right = EvaluateExpression(b.Right);
