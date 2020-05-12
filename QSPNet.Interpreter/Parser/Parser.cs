@@ -52,9 +52,17 @@
         
         private ExpressionSyntax ParsePrimaryExpression() =>
             Current.Kind switch {
+                SyntaxTokenKind.OpenParenthesis => ParseParenthesisedExpression(),
                 SyntaxTokenKind.Number => new LiteralExpressionSyntax(Match(SyntaxTokenKind.Number)),
                 SyntaxTokenKind.String => new LiteralExpressionSyntax(Match(SyntaxTokenKind.String)),
                 _ => new NameExpressionSyntax(Match(SyntaxTokenKind.Identifier))
             };
+
+        private ExpressionSyntax ParseParenthesisedExpression() {
+            var open = Match(SyntaxTokenKind.OpenParenthesis);
+            var expression = ParseExpression();
+            var close = Match(SyntaxTokenKind.CloseParenthesis);
+            return new ParenthesisedExpressionSyntax(open, expression, close);
+        }
     }
 }

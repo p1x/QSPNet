@@ -3,6 +3,11 @@
 <#@ import namespace="System.Linq" #>
 <#
     var expressions = new (string name, (string name, MemberType type, bool isOptional)[] members)[] {
+        ("Parenthesised", new[] {
+            ("OpenParenthesis", MemberType.Token, false),
+            ("Expression", MemberType.Expression, false),
+            ("CloseParenthesis", MemberType.Token, false),
+        }),
         ("Binary", new[] {
             ("Left", MemberType.Expression, false),
             ("Operator", MemberType.Token, false),

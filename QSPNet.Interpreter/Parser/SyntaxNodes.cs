@@ -2,6 +2,25 @@
 using System.Collections.Generic;
 
 namespace QSPNet.Interpreter {
+        public class ParenthesisedExpressionSyntax : ExpressionSyntax {
+            public ParenthesisedExpressionSyntax(SyntaxToken openParenthesis, ExpressionSyntax expression, SyntaxToken closeParenthesis) {
+                OpenParenthesis = openParenthesis ?? throw new ArgumentNullException(nameof(openParenthesis)); 
+                Expression = expression ?? throw new ArgumentNullException(nameof(expression)); 
+                CloseParenthesis = closeParenthesis ?? throw new ArgumentNullException(nameof(closeParenthesis)); 
+            }
+
+            public override SyntaxExpressionKind ExpressionKind => SyntaxExpressionKind.Parenthesised;
+
+            public SyntaxToken OpenParenthesis { get; }
+            public ExpressionSyntax Expression { get; }
+            public SyntaxToken CloseParenthesis { get; }
+
+            public override IEnumerable<object> GetChildren() {
+                yield return OpenParenthesis;
+                yield return Expression;
+                yield return CloseParenthesis;
+            }   
+        }
         public class BinaryExpressionSyntax : ExpressionSyntax {
             public BinaryExpressionSyntax(ExpressionSyntax left, SyntaxToken @operator, ExpressionSyntax right) {
                 Left = left ?? throw new ArgumentNullException(nameof(left)); 

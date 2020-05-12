@@ -31,10 +31,11 @@ namespace QSPNet.Interpreter {
 
         private object EvaluateExpression(ExpressionSyntax expression) =>
             expression switch {
-                LiteralExpressionSyntax l => EvaluateLiteralExpression(l),
-                UnaryExpressionSyntax   u => EvaluateUnaryExpression(u),
-                BinaryExpressionSyntax  b => EvaluateBinaryExpression(b),
-                NameExpressionSyntax    n => EvaluateNameExpression(n),
+                LiteralExpressionSyntax       l => EvaluateLiteralExpression(l),
+                UnaryExpressionSyntax         u => EvaluateUnaryExpression(u),
+                BinaryExpressionSyntax        b => EvaluateBinaryExpression(b),
+                NameExpressionSyntax          n => EvaluateNameExpression(n),
+                ParenthesisedExpressionSyntax p => EvaluateParenthesisedExpression(p),
                 _ => string.Empty
             };
 
@@ -77,6 +78,10 @@ namespace QSPNet.Interpreter {
 
         private object EvaluateNameExpression(NameExpressionSyntax n) {
             return _variables[n.Identifier.Text];
+        }
+
+        private object EvaluateParenthesisedExpression(ParenthesisedExpressionSyntax p) {
+            return EvaluateExpression(p.Expression);
         }
     }
 }
