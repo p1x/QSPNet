@@ -3,18 +3,18 @@ using System.Collections.Generic;
 
 namespace QSPNet.Interpreter {
     public abstract class StatementSyntax : SyntaxNode {
-        protected StatementSyntax(SyntaxToken endOfLineToken) {
-            EndOfLineToken = endOfLineToken ?? throw new ArgumentNullException(nameof(endOfLineToken));
+        protected StatementSyntax(SyntaxToken endToken) {
+            EndToken = endToken ?? throw new ArgumentNullException(nameof(endToken));
         }
 
         public override SyntaxKind Kind => StatementKind.AsSyntaxKind();
 
         public abstract SyntaxStatementKind StatementKind { get; }
         
-        public SyntaxToken EndOfLineToken { get; }
+        public SyntaxToken EndToken { get; }
 
         public override IEnumerable<object> GetChildren() {
-            yield return EndOfLineToken;
+            yield return EndToken;
         }
     }
 }

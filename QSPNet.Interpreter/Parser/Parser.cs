@@ -15,35 +15,39 @@
             var identifierToken = Match(SyntaxTokenKind.Identifier);
             var equalsToken     = Match(SyntaxTokenKind.Equals);
             var expression      = ParseExpression();
-            var endOfLineToken  = Match(SyntaxTokenKind.EndOfLine);
+            var endOfLineToken  = MatchEndOfStatement();
             return new AssignmentStatementSyntax(identifierToken, equalsToken, expression, endOfLineToken);
         }
 
         private StatementSyntax ParseExpressionStatement() {
             var expression     = ParseExpression();
-            var endOfLineToken = Match(SyntaxTokenKind.EndOfLine);
+            var endOfLineToken = MatchEndOfStatement();
             return new ExpressionStatementSyntax(expression, endOfLineToken);
         }
 
-        private ExpressionSyntax ParseExpression(Precedence parentPrecedence = default) {
-            var left = ParseExpressionLeft(parentPrecedence);
+        private ExpressionSyntax ParseExpression(bool parseConcat = false, Precedence parentPrecedence = default) {
+            var left = ParseExpressionLeft(parseConcat, parentPrecedence);
 
+            // if parseConcat - we parse '&' as string concatenation token
+            // else - we parse '&' as statement chaining
             Precedence precedence;
-            while ((precedence = Current.Kind.GetBinaryPrecedence()) > parentPrecedence) {
+            while ((precedence = Current.Kind.GetBinaryPrecedence()) > parentPrecedence &&
+                   (parseConcat || Current.Kind != SyntaxTokenKind.Ampersand)
+            ) {
                 var operatorToken = Next();
-                var right = ParseExpression(precedence);
+                var right = ParseExpression(parseConcat, precedence);
                 left = new BinaryExpressionSyntax(left, operatorToken, right);
             }
 
             return left;
         }
 
-        private ExpressionSyntax ParseExpressionLeft(Precedence parentPrecedence) {
+        private ExpressionSyntax ParseExpressionLeft(bool parseConcat, Precedence parentPrecedence) {
             // if current is unary operator (precedence > 0) and its precedence > parentPrecedence
             var unaryPrecedence = Current.Kind.GetUnaryPrecedence();
             if (unaryPrecedence > parentPrecedence) {
                 var operatorToken = Next();
-                var operand = ParseExpression(unaryPrecedence);
+                var operand = ParseExpression(parseConcat, unaryPrecedence);
                 return new UnaryExpressionSyntax(operatorToken, operand);
             }
 
@@ -60,7 +64,7 @@
 
         private ExpressionSyntax ParseParenthesisedExpression() {
             var open = Match(SyntaxTokenKind.OpenParenthesis);
-            var expression = ParseExpression();
+            var expression = ParseExpression(true);
             var close = Match(SyntaxTokenKind.CloseParenthesis);
             return new ParenthesisedExpressionSyntax(open, expression, close);
         }

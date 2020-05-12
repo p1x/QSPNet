@@ -19,12 +19,13 @@
     };
 
     var operatorTokens = new (string name, string text, int binaryPrecedence, int unaryPrecedence)[] {
-        ("Equals", "=", 1, 0),
-        ("Plus",   "+", 2, 1),
-        ("Minus",  "-", 2, 1),
-        ("Mod",  "MOD", 3, 0),
-        ("Star",   "*", 4, 0),
-        ("Slash",  "/", 4, 0),
+        ("Ampersand", "&", 1, 0),
+        ("Equals",    "=", 2, 0),
+        ("Plus",      "+", 3, 1),
+        ("Minus",     "-", 3, 1),
+        ("Mod",     "MOD", 4, 0),
+        ("Star",      "*", 5, 0),
+        ("Slash",     "/", 5, 0),
     };
     var nonOperatorTokens = new (string name, string text)[] {
         ("OpenParenthesis",  "("),

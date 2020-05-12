@@ -42,6 +42,8 @@ namespace QSPNet.Interpreter {
                     return ConsumeSingleCharToken(SyntaxTokenKind.Slash, _position);
                 case '=':
                     return ConsumeSingleCharToken(SyntaxTokenKind.Equals, _position);
+                case '&':
+                    return ConsumeSingleCharToken(SyntaxTokenKind.Ampersand, _position);
                 case '(':
                     return ConsumeSingleCharToken(SyntaxTokenKind.OpenParenthesis, _position);
                 case ')':

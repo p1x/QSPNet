@@ -50,6 +50,15 @@
             return SyntaxToken.Manufacture(kind, _current.Position);
         }
 
+        protected SyntaxToken MatchEndOfStatement() {
+            if(_current.Kind == SyntaxTokenKind.EndOfLine ||
+               _current.Kind == SyntaxTokenKind.Ampersand)
+                return Next();
+            
+            _diagnostics.ReportUnexpectedEndOfStatementToken(_current);
+            return SyntaxToken.Manufacture(SyntaxTokenKind.EndOfLine, _current.Position);
+        }
+
         protected SyntaxToken Current => _current;
         protected SyntaxToken Lookahead => _next;
     }

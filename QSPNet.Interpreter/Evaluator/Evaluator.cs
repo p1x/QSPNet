@@ -57,6 +57,9 @@ namespace QSPNet.Interpreter {
             var left = EvaluateExpression(b.Left);
             var right = EvaluateExpression(b.Right);
 
+            if (b.Operator.Kind == SyntaxTokenKind.Ampersand)
+                return string.Concat(left, right);
+            
             if ((left  is int leftInt  || int.TryParse(left.ToString(),  out leftInt)) &&
                 (right is int rightInt || int.TryParse(right.ToString(), out rightInt))) {
 

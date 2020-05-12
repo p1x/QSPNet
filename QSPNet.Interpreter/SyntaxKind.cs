@@ -7,26 +7,27 @@
         Number           = 0x00000004,
         String           = 0x00000005,
         Identifier       = 0x00000006,
-        Equals           = 0x00000007,
-        Plus             = 0x00000008,
-        Minus            = 0x00000009,
-        Mod              = 0x0000000a,
-        Star             = 0x0000000b,
-        Slash            = 0x0000000c,
-        OpenParenthesis  = 0x0000000d,
-        CloseParenthesis = 0x0000000e,
-        ContinueLine     = 0x0000000f,
+        Ampersand        = 0x00000007,
+        Equals           = 0x00000008,
+        Plus             = 0x00000009,
+        Minus            = 0x0000000a,
+        Mod              = 0x0000000b,
+        Star             = 0x0000000c,
+        Slash            = 0x0000000d,
+        OpenParenthesis  = 0x0000000e,
+        CloseParenthesis = 0x0000000f,
+        ContinueLine     = 0x00000010,
     }
     public enum SyntaxExpressionKind {
-        Literal       = 0x00010010,
-        Unary         = 0x00010011,
-        Binary        = 0x00010012,
-        Name          = 0x00010013,
-        Parenthesised = 0x00010014,
+        Literal       = 0x00010011,
+        Unary         = 0x00010012,
+        Binary        = 0x00010013,
+        Name          = 0x00010014,
+        Parenthesised = 0x00010015,
     }
     public enum SyntaxStatementKind {
-        Expression = 0x00020015,
-        Assignment = 0x00020016,
+        Expression = 0x00020016,
+        Assignment = 0x00020017,
     }
     public enum SyntaxKind {
         EndOfFileToken          = 0x00000000,
@@ -36,22 +37,23 @@
         NumberToken             = 0x00000004,
         StringToken             = 0x00000005,
         IdentifierToken         = 0x00000006,
-        EqualsToken             = 0x00000007,
-        PlusToken               = 0x00000008,
-        MinusToken              = 0x00000009,
-        ModToken                = 0x0000000a,
-        StarToken               = 0x0000000b,
-        SlashToken              = 0x0000000c,
-        OpenParenthesisToken    = 0x0000000d,
-        CloseParenthesisToken   = 0x0000000e,
-        ContinueLineToken       = 0x0000000f,
-        LiteralExpression       = 0x00010010,
-        UnaryExpression         = 0x00010011,
-        BinaryExpression        = 0x00010012,
-        NameExpression          = 0x00010013,
-        ParenthesisedExpression = 0x00010014,
-        ExpressionStatement     = 0x00020015,
-        AssignmentStatement     = 0x00020016,
+        AmpersandToken          = 0x00000007,
+        EqualsToken             = 0x00000008,
+        PlusToken               = 0x00000009,
+        MinusToken              = 0x0000000a,
+        ModToken                = 0x0000000b,
+        StarToken               = 0x0000000c,
+        SlashToken              = 0x0000000d,
+        OpenParenthesisToken    = 0x0000000e,
+        CloseParenthesisToken   = 0x0000000f,
+        ContinueLineToken       = 0x00000010,
+        LiteralExpression       = 0x00010011,
+        UnaryExpression         = 0x00010012,
+        BinaryExpression        = 0x00010013,
+        NameExpression          = 0x00010014,
+        ParenthesisedExpression = 0x00010015,
+        ExpressionStatement     = 0x00020016,
+        AssignmentStatement     = 0x00020017,
     }
 
     public static partial class SyntaxFacts {
@@ -67,6 +69,7 @@
         public static string GetText(this SyntaxKind kind) => GetText(kind.AsToken());  
         public static string GetText(this SyntaxTokenKind kind) =>
             kind switch {
+                SyntaxTokenKind.Ampersand        => "&",
                 SyntaxTokenKind.Equals           => "=",
                 SyntaxTokenKind.Plus             => "+",
                 SyntaxTokenKind.Minus            => "-",
@@ -82,20 +85,21 @@
         public static Precedence GetUnaryPrecedence(this SyntaxKind kind) => GetUnaryPrecedence(kind.AsToken());
         public static Precedence GetUnaryPrecedence(this SyntaxTokenKind kind) =>
             kind switch {
-                SyntaxTokenKind.Plus   => 0x00010001,
-                SyntaxTokenKind.Minus  => 0x00010001,
+                SyntaxTokenKind.Plus      => 0x00010001,
+                SyntaxTokenKind.Minus     => 0x00010001,
                 _ => 0
             };
 
         public static Precedence GetBinaryPrecedence(this SyntaxKind kind) => GetBinaryPrecedence(kind.AsToken());
         public static Precedence GetBinaryPrecedence(this SyntaxTokenKind kind) =>
             kind switch {
-                SyntaxTokenKind.Equals => 0x00000001,
-                SyntaxTokenKind.Plus   => 0x00000002,
-                SyntaxTokenKind.Minus  => 0x00000002,
-                SyntaxTokenKind.Mod    => 0x00000003,
-                SyntaxTokenKind.Star   => 0x00000004,
-                SyntaxTokenKind.Slash  => 0x00000004,
+                SyntaxTokenKind.Ampersand => 0x00000001,
+                SyntaxTokenKind.Equals    => 0x00000002,
+                SyntaxTokenKind.Plus      => 0x00000003,
+                SyntaxTokenKind.Minus     => 0x00000003,
+                SyntaxTokenKind.Mod       => 0x00000004,
+                SyntaxTokenKind.Star      => 0x00000005,
+                SyntaxTokenKind.Slash     => 0x00000005,
                 _ => 0
             };
     }

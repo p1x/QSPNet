@@ -83,7 +83,7 @@ namespace QSPNet.Interpreter {
         var ctorParamsStr = string.Join(", ", ctorParams);
 #>
         public class <#= s.name #>StatementSyntax : StatementSyntax {
-            public <#= s.name #>StatementSyntax(<#= ctorParamsStr #>, SyntaxToken endOfLineToken) : base(endOfLineToken) {
+            public <#= s.name #>StatementSyntax(<#= ctorParamsStr #>, SyntaxToken endToken) : base(endToken) {
 <#
             foreach (var (name, _, isOptional) in s.members) {
 #>

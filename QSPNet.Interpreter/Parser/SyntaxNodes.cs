@@ -83,7 +83,7 @@ namespace QSPNet.Interpreter {
             }   
         }
         public class ExpressionStatementSyntax : StatementSyntax {
-            public ExpressionStatementSyntax(ExpressionSyntax expression, SyntaxToken endOfLineToken) : base(endOfLineToken) {
+            public ExpressionStatementSyntax(ExpressionSyntax expression, SyntaxToken endToken) : base(endToken) {
                 Expression = expression ?? throw new ArgumentNullException(nameof(expression)); 
             }
 
@@ -98,7 +98,7 @@ namespace QSPNet.Interpreter {
             }   
         }
         public class AssignmentStatementSyntax : StatementSyntax {
-            public AssignmentStatementSyntax(SyntaxToken identifier, SyntaxToken equals, ExpressionSyntax expression, SyntaxToken endOfLineToken) : base(endOfLineToken) {
+            public AssignmentStatementSyntax(SyntaxToken identifier, SyntaxToken equals, ExpressionSyntax expression, SyntaxToken endToken) : base(endToken) {
                 Identifier = identifier ?? throw new ArgumentNullException(nameof(identifier)); 
                 Equals = equals ?? throw new ArgumentNullException(nameof(equals)); 
                 Expression = expression ?? throw new ArgumentNullException(nameof(expression)); 
