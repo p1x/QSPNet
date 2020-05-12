@@ -1,28 +1,29 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
+using System.IO;
 
 namespace QSPNet.Interpreter {
     public class Evaluator {
         private readonly Dictionary<string, object> _variables = new Dictionary<string, object>();
         private readonly CompilationUnitSyntax _compilationUnit;
-
-        public Evaluator(CompilationUnitSyntax compilationUnit) {
+        private readonly TextReader _reader;
+        private readonly TextWriter _writer;
+        
+        public Evaluator(CompilationUnitSyntax compilationUnit, TextReader reader, TextWriter writer) {
             _compilationUnit = compilationUnit;
+            _reader = reader;
+            _writer = writer;
         }
 
-        public string Evaluate() {
-            var resultBuilder = new StringBuilder();
+        public void Evaluate() {
             foreach (var statement in _compilationUnit.Statements) {
                 var r = EvaluateStatement(statement);
                 if (r is VariableChangeResult v) {
                     _variables[v.VariableName] = v.Value;
                 } else {
-                    resultBuilder.AppendLine(r.Value.ToString());
+                    _writer.WriteLine(r.Value.ToString());
                 }
             }
-
-            return resultBuilder.ToString();
         }
         
         private EvaluationResult EvaluateStatement(StatementSyntax statement) =>
@@ -68,11 +69,6 @@ namespace QSPNet.Interpreter {
                 _ => string.Empty
             };
 
-        private object EvaluateInput(object message) {
-            Console.WriteLine(message);
-            return Console.ReadLine();
-        }
-        
         private object EvaluateBinaryExpression(BinaryExpressionSyntax b) {
             var left = EvaluateExpression(b.Left);
             var right = EvaluateExpression(b.Right);
@@ -105,6 +101,12 @@ namespace QSPNet.Interpreter {
 
         private object EvaluateParenthesisedExpression(ParenthesisedExpressionSyntax p) {
             return EvaluateExpression(p.Expression);
+        }
+
+        private string EvaluateInput(object message) {
+            _writer.WriteLine(message);
+            _writer.Write("> ");
+            return _reader.ReadLine() ?? string.Empty;
         }
     }
 }

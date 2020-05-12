@@ -99,9 +99,8 @@ namespace QSPNet.Interpreter {
                 PrintDiagnostics(d);
 
             if (syntaxTree.Diagnostics.Count == 0) {
-                var evaluator = new Evaluator(syntaxTree.Root);
-                var result = evaluator.Evaluate();
-                Console.Write(result);
+                var evaluator = new Evaluator(syntaxTree.Root, Console.In, Console.Out);
+                evaluator.Evaluate();
             }
         }
 
