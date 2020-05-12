@@ -47,12 +47,17 @@
         "Assignment"
     };
 
+    var custom = new[] {
+        "CompilationUnit"
+    };
+
     List<(string name, SyntaxKindKind kind, int id)> kinds = Enumerable.Empty<(string, SyntaxKindKind)>()
         .Concat(specialTokens.Select(x => (x, SyntaxKindKind.Token)))
         .Concat(customParseTokens.Select(x => (x, SyntaxKindKind.Token)))
         .Concat(parseableTokens.Select(x => (x.name, SyntaxKindKind.Token)))
         .Concat(expressions.Select(x => (x, SyntaxKindKind.Expression)))
         .Concat(statements.Select(x => (x, SyntaxKindKind.Statement)))
+        .Concat(custom.Select(x => (x, SyntaxKindKind.Custom)))
         .Select((x, i) => (x.Item1, x.Item2, i ^ ((int)x.Item2 << 16)))
         .ToList();
 
@@ -105,10 +110,14 @@ namespace QSPNet.Interpreter {
     generateEnums(SyntaxKindKind.Token);
     generateEnums(SyntaxKindKind.Expression);
     generateEnums(SyntaxKindKind.Statement);
+    generateEnums(SyntaxKindKind.Custom);
 #>
     public enum SyntaxKind {
 <#
-    generateEnumContent(kinds.Select(x => (x.name + x.kind, x.kind, x.id)));
+    generateEnumContent(kinds.Select(x => {
+        var suffix = x.kind != SyntaxKindKind.Custom ? x.kind.ToString() : String.Empty;
+        return (x.name + suffix, x.kind, x.id);
+    }));
 #>
     }
 
@@ -186,8 +195,9 @@ namespace QSPNet.Interpreter {
 }
 <#+
     private enum SyntaxKindKind {
-        Token = 0,
-        Expression = 1,
-        Statement = 2,
+        Custom = 0,
+        Token = 1,
+        Expression = 2,
+        Statement = 3,
     }
 #>

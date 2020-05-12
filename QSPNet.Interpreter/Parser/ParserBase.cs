@@ -18,15 +18,14 @@ namespace QSPNet.Interpreter {
             _next = FilterNext(_lexer);
         }
         
-        public (SyntaxTree syntaxTree, DiagnosticBag diagnostics) Parse() {
-            var statements = ParseCore().ToImmutableArray();
-            var endOfFileToken = Match(SyntaxTokenKind.EndOfFile);
-            var syntaxTree = new SyntaxTree(_text, statements, endOfFileToken);
+        public SyntaxTree Parse() {
+            var compilationUnit = ParseCore();
             var diagnostics = _lexer.GetDiagnostics().With(_diagnostics);
-            return (syntaxTree, diagnostics);
+            var syntaxTree = new SyntaxTree(_text, compilationUnit, diagnostics);
+            return syntaxTree;
         }
 
-        protected abstract IEnumerable<StatementSyntax> ParseCore();
+        protected abstract CompilationUnitSyntax ParseCore();
 
         private static SyntaxToken FilterNext(Lexer lexer) {
             SyntaxToken token;

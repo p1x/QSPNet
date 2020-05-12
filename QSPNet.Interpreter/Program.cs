@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Text;
 
 namespace QSPNet.Interpreter {
@@ -8,7 +7,6 @@ namespace QSPNet.Interpreter {
 
         private static void Main(string[] args) {
             var text = new StringBuilder();
-            var variables = new Dictionary<string, object>();
             while (true) {
                 if(text.Length == 0)
                     Console.Write("> ");
@@ -47,12 +45,10 @@ namespace QSPNet.Interpreter {
                             break;
                         case "/R":
                         case "/RUN":
-                            Process(text.ToString(), variables);
-                            variables.Clear();
+                            Process(text.ToString());
                             break;
                         case "/RS":
                         case "/RESET":
-                            variables.Clear();
                             text.Clear();
                             break;
                         default:
@@ -67,7 +63,7 @@ namespace QSPNet.Interpreter {
 
         private static ReplOptions SwitchFlag(ReplOptions flag) => (_replOptions & flag) != 0 ? _replOptions & ~flag : _replOptions ^ flag;
 
-        private static void Process(string line, Dictionary<string, object> variables) {
+        private static void Process(string line) {
             if(_replOptions.HasFlag(ReplOptions.PrintLexedTokens)) {
                 var lexer = new Lexer(line);
                 var tokens = lexer.Lex();
@@ -78,17 +74,10 @@ namespace QSPNet.Interpreter {
             }
             
             var parser = new Parser(line);
-            var (syntaxTree, diagnostics) = parser.Parse();
-
+            var syntaxTree = parser.Parse();
+            
             if (_replOptions.HasFlag(ReplOptions.PrintSyntaxTokens)) {
                 static void print(object o, int i) {
-                    if (o is IEnumerable<StatementSyntax> ss) {
-                        foreach (var s in ss) {
-                            print(s, i + 1);
-                        }
-                        return;
-                    }
-                    
                     if (o is SyntaxToken t && t.IsManufactured)
                         Console.ForegroundColor = ConsoleColor.Red;
                     Console.Write(new string(' ', i * 4));
@@ -102,27 +91,17 @@ namespace QSPNet.Interpreter {
                     }
                 }
                 Console.WriteLine("=== Syntax Tree ===");
-                print(syntaxTree.Statements, 0);
+                print(syntaxTree.Root, 0);
                 Console.WriteLine();
             }
             
-            foreach (var d in diagnostics)
+            foreach (var d in syntaxTree.Diagnostics)
                 PrintDiagnostics(d);
 
-            if (diagnostics.Count == 0) {
-                foreach (var statement in syntaxTree.Statements) {
-                    var evaluator = new Evaluator(statement, variables);
-                    var result = evaluator.Evaluate();
-
-                    switch (result) {
-                        case VariableChangeResult v:
-                            variables[v.VariableName] = v.Value;
-                            break;
-                        default:
-                            Console.WriteLine(result.Value);
-                            break;
-                    }
-                }
+            if (syntaxTree.Diagnostics.Count == 0) {
+                var evaluator = new Evaluator(syntaxTree.Root);
+                var result = evaluator.Evaluate();
+                Console.Write(result);
             }
         }
 

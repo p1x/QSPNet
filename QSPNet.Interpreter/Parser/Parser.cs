@@ -1,13 +1,18 @@
 ﻿using System.Collections.Generic;
+using System.Collections.Immutable;
 
 namespace QSPNet.Interpreter {
     public class Parser : ParserBase {
         public Parser(string text) : base(text) { }
 
-        protected override IEnumerable<StatementSyntax> ParseCore() {
+        protected override CompilationUnitSyntax ParseCore() {
+            var statements = new List<StatementSyntax>();
             while (Current.Kind != SyntaxTokenKind.EndOfFile) {
-                yield return ParseStatement();
+                statements.Add(ParseStatement());
             }
+
+            var eof = Match(SyntaxTokenKind.EndOfFile);
+            return new CompilationUnitSyntax(statements.ToImmutableArray(), eof);
         }
 
         private StatementSyntax ParseStatement() {

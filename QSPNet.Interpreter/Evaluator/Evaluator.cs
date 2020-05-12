@@ -1,18 +1,32 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Text;
 
 namespace QSPNet.Interpreter {
     public class Evaluator {
-        private readonly StatementSyntax _statement;
-        private readonly Dictionary<string, object> _variables;
-        
-        public Evaluator(StatementSyntax expression, Dictionary<string, object> variables) {
-            _statement = expression;
-            _variables = variables;
+        private readonly Dictionary<string, object> _variables = new Dictionary<string, object>();
+        private readonly CompilationUnitSyntax _compilationUnit;
+
+        public Evaluator(CompilationUnitSyntax compilationUnit) {
+            _compilationUnit = compilationUnit;
         }
 
-        public EvaluationResult Evaluate() =>
-            _statement switch {
+        public string Evaluate() {
+            var resultBuilder = new StringBuilder();
+            foreach (var statement in _compilationUnit.Statements) {
+                var r = EvaluateStatement(statement);
+                if (r is VariableChangeResult v) {
+                    _variables[v.VariableName] = v.Value;
+                } else {
+                    resultBuilder.AppendLine(r.Value.ToString());
+                }
+            }
+
+            return resultBuilder.ToString();
+        }
+        
+        private EvaluationResult EvaluateStatement(StatementSyntax statement) =>
+            statement switch {
                 ExpressionStatementSyntax e => EvaluateExpressionStatement(e),
                 AssignmentStatementSyntax a => EvaluateAssignmentStatement(a),
                 _ => throw new ArgumentOutOfRangeException()

@@ -1,17 +1,17 @@
-﻿using System.Collections.Immutable;
+﻿using System;
 
 namespace QSPNet.Interpreter {
     public class SyntaxTree {
-        public SyntaxTree(string text, ImmutableArray<StatementSyntax> statements, SyntaxToken endOfFileToken) {
-            Text = text;
-            Statements = statements;
-            EndOfFileToken = endOfFileToken;
+        public SyntaxTree(string text, CompilationUnitSyntax root, DiagnosticBag diagnostics) {
+            Text = text ?? throw new ArgumentNullException(nameof(text));
+            Root = root ?? throw new ArgumentNullException(nameof(root));
+            Diagnostics = diagnostics ?? throw new ArgumentNullException(nameof(diagnostics));;
         }
 
         public string Text { get; }
         
-        public ImmutableArray<StatementSyntax> Statements { get; }
+        public DiagnosticBag Diagnostics { get; }
         
-        public SyntaxToken EndOfFileToken { get; }
+        public CompilationUnitSyntax Root { get; }
     }
 }
