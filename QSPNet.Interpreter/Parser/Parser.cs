@@ -1,8 +1,14 @@
-﻿namespace QSPNet.Interpreter {
+﻿using System.Collections.Generic;
+
+namespace QSPNet.Interpreter {
     public class Parser : ParserBase {
         public Parser(string text) : base(text) { }
 
-        protected override StatementSyntax ParseCore() => ParseStatement();
+        protected override IEnumerable<StatementSyntax> ParseCore() {
+            while (Current.Kind != SyntaxTokenKind.EndOfFile) {
+                yield return ParseStatement();
+            }
+        }
 
         private StatementSyntax ParseStatement() {
             if (Current.Kind == SyntaxTokenKind.Identifier && Lookahead.Kind == SyntaxTokenKind.Equals)

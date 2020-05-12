@@ -1,13 +1,17 @@
-﻿namespace QSPNet.Interpreter {
+﻿using System.Collections.Immutable;
+
+namespace QSPNet.Interpreter {
     public class SyntaxTree {
-        public SyntaxTree(string text, StatementSyntax root, SyntaxToken endOfFileToken) {
+        public SyntaxTree(string text, ImmutableArray<StatementSyntax> statements, SyntaxToken endOfFileToken) {
             Text = text;
-            Root = root;
+            Statements = statements;
             EndOfFileToken = endOfFileToken;
         }
 
         public string Text { get; }
-        public StatementSyntax Root { get; }
+        
+        public ImmutableArray<StatementSyntax> Statements { get; }
+        
         public SyntaxToken EndOfFileToken { get; }
     }
 }

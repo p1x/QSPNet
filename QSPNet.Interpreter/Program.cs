@@ -77,6 +77,13 @@ namespace QSPNet.Interpreter {
 
             if (_replOptions.HasFlag(ReplOptions.PrintSyntaxTokens)) {
                 static void print(object o, int i) {
+                    if (o is IEnumerable<StatementSyntax> ss) {
+                        foreach (var s in ss) {
+                            print(s, i + 1);
+                        }
+                        return;
+                    }
+                    
                     if (o is SyntaxToken t && t.IsManufactured)
                         Console.ForegroundColor = ConsoleColor.Red;
                     Console.Write(new string(' ', i * 4));
@@ -90,7 +97,7 @@ namespace QSPNet.Interpreter {
                     }
                 }
                 Console.WriteLine("=== Syntax Tree ===");
-                print(syntaxTree.Root, 0);
+                print(syntaxTree.Statements, 0);
                 Console.WriteLine();
             }
             
@@ -98,16 +105,18 @@ namespace QSPNet.Interpreter {
                 PrintDiagnostics(d);
 
             if (diagnostics.Count == 0) {
-                var evaluator = new Evaluator(syntaxTree.Root, variables);
-                var result = evaluator.Evaluate();
+                foreach (var statement in syntaxTree.Statements) {
+                    var evaluator = new Evaluator(statement, variables);
+                    var result = evaluator.Evaluate();
 
-                switch (result) {
-                    case VariableChangeResult v:
-                        variables[v.VariableName] = v.Value;
-                        break;
-                    default:
-                        Console.WriteLine(result.Value);
-                        break;
+                    switch (result) {
+                        case VariableChangeResult v:
+                            variables[v.VariableName] = v.Value;
+                            break;
+                        default:
+                            Console.WriteLine(result.Value);
+                            break;
+                    }
                 }
             }
         }

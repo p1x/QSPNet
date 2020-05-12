@@ -1,4 +1,7 @@
-﻿namespace QSPNet.Interpreter {
+﻿using System.Collections.Generic;
+using System.Collections.Immutable;
+
+namespace QSPNet.Interpreter {
     public abstract class ParserBase {
         private readonly string _text;
         private readonly Lexer _lexer;
@@ -16,14 +19,14 @@
         }
         
         public (SyntaxTree syntaxTree, DiagnosticBag diagnostics) Parse() {
-            var statement = ParseCore();
+            var statements = ParseCore().ToImmutableArray();
             var endOfFileToken = Match(SyntaxTokenKind.EndOfFile);
-            var syntaxTree = new SyntaxTree(_text, statement, endOfFileToken);
+            var syntaxTree = new SyntaxTree(_text, statements, endOfFileToken);
             var diagnostics = _lexer.GetDiagnostics().With(_diagnostics);
             return (syntaxTree, diagnostics);
         }
 
-        protected abstract StatementSyntax ParseCore();
+        protected abstract IEnumerable<StatementSyntax> ParseCore();
 
         private static SyntaxToken FilterNext(Lexer lexer) {
             SyntaxToken token;
