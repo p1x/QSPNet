@@ -44,9 +44,12 @@ namespace QSPNet.Interpreter.Binding {
             var operand = BindExpression(expression.Operand);
             var @operator = BoundUnaryOperator.Bind(expression.Operator.Kind, operand.Type);
 
+            if (operand.Kind == BoundNodeKind.ErrorExpression)
+                return BoundErrorExpression.Instance;
+            
             if (@operator.Kind == BoundUnaryOperatorKind.Undefined) {
                 _diagnostics.ReportUndefinedUnaryOperator();
-                return operand;
+                return BoundErrorExpression.Instance;
             }
             
             return new BoundUnaryExpression(@operator, operand);
@@ -57,9 +60,12 @@ namespace QSPNet.Interpreter.Binding {
             var right = BindExpression(expression.Right);
             var @operator = BoundBinaryOperator.Bind(expression.Operator.Kind, left.Type, right.Type);
 
+            if (left.Kind == BoundNodeKind.ErrorExpression || right.Kind == BoundNodeKind.ErrorExpression)
+                return BoundErrorExpression.Instance;
+            
             if (@operator.Kind == BoundBinaryOperatorKind.Undefined) {
                 _diagnostics.ReportUndefinedBinaryOperator();
-                return left;
+                return BoundErrorExpression.Instance;
             }
             
             return new BoundBinaryExpression(left, @operator, right);
