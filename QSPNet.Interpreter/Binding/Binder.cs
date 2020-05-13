@@ -1,8 +1,10 @@
-using System;
+﻿using System;
+using System.Collections.Generic;
 
 namespace QSPNet.Interpreter.Binding {
     public class Binder {
-        private BinderDiagnosticBag _diagnostics = new BinderDiagnosticBag();
+        private readonly BinderDiagnosticBag _diagnostics = new BinderDiagnosticBag();
+        private readonly Dictionary<string, VariableSymbol> _variableSymbols = new Dictionary<string, VariableSymbol>();
         
         public BoundStatement BindStatement(StatementSyntax statement) =>
             statement switch {
@@ -13,11 +15,18 @@ namespace QSPNet.Interpreter.Binding {
 
         private BoundStatement BindExpressionStatement(ExpressionStatementSyntax statement) {
             var expression = BindExpression(statement.Expression);
+            if (expression.Kind == BoundNodeKind.ErrorExpression)
+                return BoundErrorStatement.Instance;
             return new BoundExpressionStatement(expression);
         }
 
         private BoundStatement BindAssignmentStatement(AssignmentStatementSyntax statement) {
-            throw new System.NotImplementedException();
+            var variable = BindVariable(statement.Identifier);
+            var expression = BindExpression(statement.Expression);
+            if (expression.Kind == BoundNodeKind.ErrorExpression)
+                return BoundErrorStatement.Instance;
+            
+            return new BoundAssignmentStatement(variable, expression);
         }
 
         private BoundExpression BindExpression(ExpressionSyntax expression) =>
@@ -43,9 +52,25 @@ namespace QSPNet.Interpreter.Binding {
         }
 
         private BoundExpression BindNameExpression(NameExpressionSyntax expression) {
-            throw new NotImplementedException();
+            if (expression.Identifier.IsManufactured)
+                return BoundErrorExpression.Instance;
+            
+            var variable = BindVariable(expression.Identifier);
+            return new BoundVariableExpression(variable);
         }
 
+        private VariableSymbol BindVariable(SyntaxToken identifierToken) {
+            if (identifierToken.Kind != SyntaxTokenKind.Identifier)
+                throw new ArgumentException("identifierToken.Kind != SyntaxTokenKind.Identifier", nameof(identifierToken));
+
+            var name = identifierToken.Text.ToUpperInvariant();
+            if (_variableSymbols.TryGetValue(name, out var symbol))
+                return symbol;
+
+            var type = name.StartsWith('$') ? BoundType.String : BoundType.Integer;
+            return _variableSymbols[name] = new VariableSymbol(name, type);
+        }
+        
         private BoundExpression BindUnaryExpression(UnaryExpressionSyntax expression) {
             var operand = BindExpression(expression.Operand);
             if (operand.Kind == BoundNodeKind.ErrorExpression)
