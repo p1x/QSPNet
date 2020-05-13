@@ -1,10 +1,30 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
+using System.Linq;
 
 namespace QSPNet.Interpreter.Binding {
     public class Binder {
         private readonly BinderDiagnosticBag _diagnostics = new BinderDiagnosticBag();
-        private readonly Dictionary<string, VariableSymbol> _variableSymbols = new Dictionary<string, VariableSymbol>();
+        private readonly Dictionary<string, VariableSymbol> _variableSymbols;
+        
+        public Binder(Dictionary<string, VariableSymbol> variableSymbols) {
+            _variableSymbols = variableSymbols;
+        }
+
+        public static BoundGlobalScope BindScope(BoundGlobalScope previous, SyntaxTree tree) {
+            var compilationUnit = tree.Root;
+
+            var binder = new Binder(previous.Variables.ToDictionary(x => x.Name));
+            var boundStatements = new List<BoundStatement>();
+            foreach (var statement in compilationUnit.Statements) {
+                boundStatements.Add(binder.BindStatement(statement));
+            }
+
+            var variables = binder._variableSymbols.Values.ToImmutableArray();
+            var diagnostics = tree.Diagnostics.With(binder._diagnostics);
+            return new BoundGlobalScope(boundStatements.ToImmutableArray(), variables, diagnostics);
+        }
         
         public BoundStatement BindStatement(StatementSyntax statement) =>
             statement switch {
