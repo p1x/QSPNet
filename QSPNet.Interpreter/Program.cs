@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Text;
+using QSPNet.Interpreter.Binding;
 
 namespace QSPNet.Interpreter {
     static class Program {
@@ -7,6 +8,7 @@ namespace QSPNet.Interpreter {
 
         private static void Main(string[] args) {
             var text = new StringBuilder();
+            BoundGlobalScope? scope = null;
             while (true) {
                 if(text.Length == 0)
                     Console.Write("> ");
@@ -45,10 +47,11 @@ namespace QSPNet.Interpreter {
                             break;
                         case "/R":
                         case "/RUN":
-                            Process(text.ToString());
+                            scope = Process(text.ToString(), scope);
                             break;
                         case "/RS":
                         case "/RESET":
+                            scope = null;
                             text.Clear();
                             break;
                         default:
@@ -63,7 +66,7 @@ namespace QSPNet.Interpreter {
 
         private static ReplOptions SwitchFlag(ReplOptions flag) => (_replOptions & flag) != 0 ? _replOptions & ~flag : _replOptions ^ flag;
 
-        private static void Process(string line) {
+        private static BoundGlobalScope? Process(string line, BoundGlobalScope? previousScope) {
             if(_replOptions.HasFlag(ReplOptions.PrintLexedTokens)) {
                 var lexer = new Lexer(line);
                 var tokens = lexer.Lex();
@@ -95,13 +98,17 @@ namespace QSPNet.Interpreter {
                 Console.WriteLine();
             }
             
-            foreach (var d in syntaxTree.Diagnostics)
+            var scope = Binder.BindScope(previousScope, syntaxTree);
+            
+            foreach (var d in scope.Diagnostics)
                 PrintDiagnostics(d);
 
-            if (syntaxTree.Diagnostics.Count == 0) {
-                var evaluator = new Evaluator(syntaxTree.Root, Console.In, Console.Out);
+            if (scope.Diagnostics.Count == 0) {
+                var evaluator = new Evaluator(scope, Console.In, Console.Out);
                 evaluator.Evaluate();
             }
+
+            return previousScope;
         }
 
         private static void PrintDiagnostics(Diagnostics diagnostics) {

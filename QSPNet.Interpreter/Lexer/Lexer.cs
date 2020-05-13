@@ -64,7 +64,7 @@ namespace QSPNet.Interpreter {
                 case '\'': case '"':
                     return ConsumeStringToken(_position);
                 default:
-                    return char.IsLetter(current)
+                    return char.IsLetter(current) || current == '$'
                         ? ConsumeIdentifier(_position)
                         : ConsumeBadCharacter(_position);
             }

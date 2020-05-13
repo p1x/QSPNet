@@ -1,9 +1,11 @@
-﻿namespace QSPNet.Interpreter {
+﻿using QSPNet.Interpreter.Binding;
+
+namespace QSPNet.Interpreter {
     public class VariableChangeResult : EvaluationResult {
-        public VariableChangeResult(string variableName, object result) : base(result) {
-            VariableName = variableName;
+        public VariableChangeResult(VariableSymbol variable, object result) : base(result) {
+            Variable = variable;
         }
         
-        public string VariableName { get; }
+        public VariableSymbol Variable { get; }
     }
 }
