@@ -3,8 +3,13 @@
 namespace QSPNet.Interpreter.Binding {
     public class BoundUnaryExpression : BoundExpression {
         public BoundUnaryExpression(BoundUnaryOperator @operator, BoundExpression operand) : base(BoundNodeKind.UnaryExpression) {
-            Operator = @operator ?? throw new ArgumentNullException(nameof(@operator));
-            Operand = operand ?? throw new ArgumentNullException(nameof(operand));
+            if (operand.Kind == BoundNodeKind.ErrorExpression)
+                throw new ArgumentException("operand.Kind == BoundNodeKind.ErrorExpression", nameof(operand));
+            if (@operator.Kind == BoundUnaryOperatorKind.Undefined)
+                throw new ArgumentException("@operator.Kind == BoundUnaryOperatorKind.Undefined", nameof(@operator));
+            
+            Operator = @operator;
+            Operand = operand;
         }
         
         public BoundUnaryOperator Operator { get; }

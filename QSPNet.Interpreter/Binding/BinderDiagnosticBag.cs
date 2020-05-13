@@ -11,5 +11,9 @@
         public void ReportUndefinedBinaryOperator() {
             throw new System.NotImplementedException();
         }
+
+        public void ReportUndefinedLiteralType() {
+            throw new System.NotImplementedException();
+        }
     }
 }

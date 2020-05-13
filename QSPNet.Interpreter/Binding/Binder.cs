@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 
 namespace QSPNet.Interpreter.Binding {
     public class Binder {
@@ -33,6 +33,12 @@ namespace QSPNet.Interpreter.Binding {
         private BoundExpression BindLiteralExpression(LiteralExpressionSyntax expression) {
             var type = BindType(expression.Token.Kind);
             var value = expression.Token.Value ?? throw new ArgumentException("Literal expression should contain value.");
+
+            if (type == BoundType.Undefined) {
+                _diagnostics.ReportUndefinedLiteralType();
+                return BoundErrorExpression.Instance;
+            }
+            
             return new BoundLiteralExpression(type, value);
         }
 
@@ -42,11 +48,13 @@ namespace QSPNet.Interpreter.Binding {
 
         private BoundExpression BindUnaryExpression(UnaryExpressionSyntax expression) {
             var operand = BindExpression(expression.Operand);
-            var @operator = BoundUnaryOperator.Bind(expression.Operator.Kind, operand.Type);
-
             if (operand.Kind == BoundNodeKind.ErrorExpression)
                 return BoundErrorExpression.Instance;
-            
+
+            if (expression.Operator.IsManufactured)
+                return BoundErrorExpression.Instance;
+
+            var @operator = BoundUnaryOperator.Bind(expression.Operator.Kind, operand.Type);
             if (@operator.Kind == BoundUnaryOperatorKind.Undefined) {
                 _diagnostics.ReportUndefinedUnaryOperator();
                 return BoundErrorExpression.Instance;
@@ -58,11 +66,13 @@ namespace QSPNet.Interpreter.Binding {
         private BoundExpression BindBinaryExpression(BinaryExpressionSyntax expression) {
             var left = BindExpression(expression.Left);
             var right = BindExpression(expression.Right);
-            var @operator = BoundBinaryOperator.Bind(expression.Operator.Kind, left.Type, right.Type);
-
             if (left.Kind == BoundNodeKind.ErrorExpression || right.Kind == BoundNodeKind.ErrorExpression)
                 return BoundErrorExpression.Instance;
+
+            if (expression.Operator.IsManufactured)
+                return BoundErrorExpression.Instance;
             
+            var @operator = BoundBinaryOperator.Bind(expression.Operator.Kind, left.Type, right.Type);
             if (@operator.Kind == BoundBinaryOperatorKind.Undefined) {
                 _diagnostics.ReportUndefinedBinaryOperator();
                 return BoundErrorExpression.Instance;
