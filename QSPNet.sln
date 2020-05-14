@@ -1,6 +1,8 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "QSPNet.Interpreter", "QSPNet.Interpreter\QSPNet.Interpreter.csproj", "{6A3F96C5-3F45-4F19-9589-C941E06436A6}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "QSP.Interpreter", "QSP.Interpreter\QSP.Interpreter.csproj", "{6A3F96C5-3F45-4F19-9589-C941E06436A6}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "QSP.CodeAnalysis", "QSP.CodeAnalysis\QSP.CodeAnalysis.csproj", "{3D6F3078-608B-4475-80DA-DC224F13CB9A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -12,5 +14,9 @@ Global
 		{6A3F96C5-3F45-4F19-9589-C941E06436A6}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6A3F96C5-3F45-4F19-9589-C941E06436A6}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6A3F96C5-3F45-4F19-9589-C941E06436A6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3D6F3078-608B-4475-80DA-DC224F13CB9A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3D6F3078-608B-4475-80DA-DC224F13CB9A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3D6F3078-608B-4475-80DA-DC224F13CB9A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3D6F3078-608B-4475-80DA-DC224F13CB9A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
