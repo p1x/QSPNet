@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Text;
 using QSPNet.Interpreter.Binding;
 
@@ -8,7 +8,6 @@ namespace QSPNet.Interpreter {
 
         private static void Main(string[] args) {
             var text = new StringBuilder();
-            BoundGlobalScope? scope = null;
             while (true) {
                 if(text.Length == 0)
                     Console.Write("> ");
@@ -47,11 +46,10 @@ namespace QSPNet.Interpreter {
                             break;
                         case "/R":
                         case "/RUN":
-                            scope = Process(text.ToString(), scope);
+                            Process(text.ToString());
                             break;
                         case "/RS":
                         case "/RESET":
-                            scope = null;
                             text.Clear();
                             break;
                         default:
@@ -66,7 +64,7 @@ namespace QSPNet.Interpreter {
 
         private static ReplOptions SwitchFlag(ReplOptions flag) => (_replOptions & flag) != 0 ? _replOptions & ~flag : _replOptions ^ flag;
 
-        private static BoundGlobalScope? Process(string line, BoundGlobalScope? previousScope) {
+        private static void Process(string line) {
             if(_replOptions.HasFlag(ReplOptions.PrintLexedTokens)) {
                 var lexer = new Lexer(line);
                 var tokens = lexer.Lex();
@@ -98,7 +96,7 @@ namespace QSPNet.Interpreter {
                 Console.WriteLine();
             }
             
-            var scope = Binder.BindScope(previousScope, syntaxTree);
+            var scope = Binder.BindScope(syntaxTree);
             
             foreach (var d in scope.Diagnostics)
                 PrintDiagnostics(d);
@@ -107,8 +105,6 @@ namespace QSPNet.Interpreter {
                 var evaluator = new Evaluator(scope, Console.In, Console.Out);
                 evaluator.Evaluate();
             }
-
-            return previousScope;
         }
 
         private static void PrintDiagnostics(Diagnostics diagnostics) {

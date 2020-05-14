@@ -12,11 +12,11 @@ namespace QSPNet.Interpreter.Binding {
             _variableSymbols = variableSymbols;
         }
 
-        public static BoundGlobalScope BindScope(BoundGlobalScope? previous, SyntaxTree tree) {
+        public static BoundGlobalScope BindScope(SyntaxTree tree) {
             var compilationUnit = tree.Root;
 
-            var variableSymbols = previous?.Variables.ToDictionary(x => x.Name);
-            var binder = new Binder(variableSymbols ?? new Dictionary<string, VariableSymbol>());
+            var variableSymbols = new Dictionary<string, VariableSymbol>();
+            var binder = new Binder(variableSymbols);
             var boundStatements = new List<BoundStatement>();
             foreach (var statement in compilationUnit.Statements) {
                 boundStatements.Add(binder.BindStatement(statement));
