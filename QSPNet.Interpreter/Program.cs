@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Text;
 using QSPNet.Interpreter.Binding;
 
@@ -48,6 +48,10 @@ namespace QSPNet.Interpreter {
                         case "/RUN":
                             Process(text.ToString());
                             break;
+                        case "/E":
+                        case "/EMIT":
+                            Emit(text.ToString());
+                            break;
                         case "/RS":
                         case "/RESET":
                             text.Clear();
@@ -60,6 +64,16 @@ namespace QSPNet.Interpreter {
                     text.AppendLine(line);
                 }
             }
+        }
+
+        private static void Emit(string text) {
+            var parser = new Parser(text);
+            var syntaxTree = parser.Parse();
+            var scope = Binder.BindScope(syntaxTree);
+            var emitter = Emitter.Emitter.Create("test", new[] {
+                @"c:\Program Files\dotnet\shared\Microsoft.NETCore.App\3.1.2\System.Runtime.dll"
+            });
+            emitter.Emit(scope, "test");
         }
 
         private static ReplOptions SwitchFlag(ReplOptions flag) => (_replOptions & flag) != 0 ? _replOptions & ~flag : _replOptions ^ flag;
