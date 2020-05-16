@@ -3,6 +3,7 @@ using System.Collections.Immutable;
 using System.CommandLine;
 using System.CommandLine.Invocation;
 using System.IO;
+using System.Linq;
 using QSP.CodeAnalysis;
 
 namespace QSP.Compiler {
@@ -53,11 +54,20 @@ namespace QSP.Compiler {
         }
 
         public static int Run(string[] sources, string outputPath, string? moduleName, string[] references) {
-            moduleName ??= Path.GetFileNameWithoutExtension(outputPath);
-            var emitter = Emitter.Create(moduleName, references);
-            var scope = new BoundGlobalScope(ImmutableArray<BoundStatement>.Empty, ImmutableArray<VariableSymbol>.Empty, new BinderDiagnosticBag());
-            emitter.Emit(scope, outputPath);
-            return 0;
+            var texts = sources.Select(File.ReadAllText);
+
+            var parser = new Parser(texts.Single());
+            var syntaxTree = parser.Parse();
+            var compilation = Compilation.Create(syntaxTree);
+            var diagnostics = compilation.Emit(moduleName ?? Path.GetFileNameWithoutExtension(outputPath), outputPath, references);
+            if (!diagnostics.Any())
+                return 0;
+            
+            foreach (var diagnostic in diagnostics)
+                Console.Error.WriteLine(diagnostic.GetFormattedMessage());
+            
+            return 1;
+
         }
     }
 }

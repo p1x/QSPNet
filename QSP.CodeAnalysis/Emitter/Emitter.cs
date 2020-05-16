@@ -49,6 +49,9 @@ namespace QSP.CodeAnalysis {
             targetAssembly.MainModule.AssemblyReferences.Add(runtimeAssembly.Name);
 
         public DiagnosticBag Emit(BoundGlobalScope scope, string outputPath) {
+            if (scope.Diagnostics.Any())
+                return scope.Diagnostics;
+            
             var module = _assembly.MainModule;
 
             var programType = new TypeDefinition(
@@ -67,7 +70,7 @@ namespace QSP.CodeAnalysis {
             
             _assembly.Write(outputPath);
 
-            return null;
+            return scope.Diagnostics;
         }
 
         private MethodDefinition EmitMethod(string name, ImmutableArray<BoundStatement> statements, in ImmutableArray<VariableSymbol> variables) {
