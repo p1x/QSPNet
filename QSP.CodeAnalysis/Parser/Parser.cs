@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Diagnostics;
 
 namespace QSP.CodeAnalysis {
     public class Parser : ParserBase {
@@ -8,7 +9,16 @@ namespace QSP.CodeAnalysis {
         protected override CompilationUnitSyntax ParseCore() {
             var statements = new List<StatementSyntax>();
             while (Current.Kind != SyntaxTokenKind.EndOfFile) {
+                var startToken = Current;
+
                 statements.Add(ParseStatement());
+
+                // ParseStatement should always consume at least one token,
+                // but if didn't we consume one here to prevent infinite loop
+                if (startToken == Current) {
+                    Debug.Fail("startToken == Current");
+                    Next();
+                }
             }
 
             var eof = Match(SyntaxTokenKind.EndOfFile);
