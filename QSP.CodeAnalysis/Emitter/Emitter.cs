@@ -65,21 +65,8 @@ namespace QSP.CodeAnalysis {
             
             _assembly.EntryPoint = mainMethod;
             
-            _assembly.Write(outputPath + ".dll");
+            _assembly.Write(outputPath);
 
-            var runtimeConfigJsonExt = ".runtimeConfig.json";
-            var runtimeConfigContent = @"{
-  ""runtimeOptions"": {
-    ""tfm"": ""netcoreapp3.1"",
-    ""framework"": {
-      ""name"": ""Microsoft.NETCore.App"",
-      ""version"": ""3.1.0""
-    }
-  }
-}";
-
-            File.WriteAllText(outputPath + runtimeConfigJsonExt, runtimeConfigContent);
-            
             return null;
         }
 

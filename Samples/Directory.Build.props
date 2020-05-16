@@ -1,0 +1,7 @@
+﻿<Project>
+
+  <PropertyGroup>
+    <DefaultLanguageSourceExtension>.qsrc</DefaultLanguageSourceExtension>
+  </PropertyGroup>
+
+</Project>

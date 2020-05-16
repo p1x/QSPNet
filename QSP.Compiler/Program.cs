@@ -1,6 +1,9 @@
 ﻿using System;
+using System.Collections.Immutable;
 using System.CommandLine;
 using System.CommandLine.Invocation;
+using System.IO;
+using QSP.CodeAnalysis;
 
 namespace QSP.Compiler {
     internal static class Program {
@@ -50,6 +53,10 @@ namespace QSP.Compiler {
         }
 
         public static int Run(string[] sources, string outputPath, string? moduleName, string[] references) {
+            moduleName ??= Path.GetFileNameWithoutExtension(outputPath);
+            var emitter = Emitter.Create(moduleName, references);
+            var scope = new BoundGlobalScope(ImmutableArray<BoundStatement>.Empty, ImmutableArray<VariableSymbol>.Empty, new BinderDiagnosticBag());
+            emitter.Emit(scope, outputPath);
             return 0;
         }
     }

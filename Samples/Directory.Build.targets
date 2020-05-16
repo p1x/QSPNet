@@ -1,0 +1,11 @@
+﻿<Project>
+
+  <Target Name="CreateManifestResourceNames" />
+
+  <Target Name="CoreCompile" DependsOnTargets="$(CoreCompileDependsOn)">
+    <Message Text="$(MSBuildThisFileDirectory)..\QSP.Compiller\QSP.Compiller.csproj"/>
+    <Exec Command="dotnet run --project &quot;$(MSBuildThisFileDirectory)..\QSP.Compiler\QSP.Compiler.csproj&quot; -- @(Compile->'&quot;%(Identity)&quot;', ' ') -o &quot;@(IntermediateAssembly)&quot; @(ReferencePath->'-r &quot;%(Identity)&quot;', ' ')"
+          WorkingDirectory="$(MSBuildProjectDirectory)" />
+  </Target>
+
+</Project>
