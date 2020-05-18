@@ -319,6 +319,8 @@ namespace QSP.CodeAnalysis {
                     il.Emit(OpCodes.Rem);
                     break;
                 case BoundBinaryOperatorKind.Concatenation:
+                    il.Emit(OpCodes.Call, GetMethodReference("System.String", "Concat", new []{ "System.String", "System.String" }));
+                    break;
                 default:
                     throw new ArgumentOutOfRangeException();
             }

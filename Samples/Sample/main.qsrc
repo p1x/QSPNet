@@ -1,5 +1,5 @@
-﻿'Hello'
-input 'Enter something'
+﻿'Welcome!'
+'Hello ' + input 'Enter your name:' + '!'
 
 a = 1 + 2
 b = 10
