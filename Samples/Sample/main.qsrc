@@ -1,4 +1,6 @@
-﻿  
+﻿'Hello'
+input 'Enter something'
+
 a = 1 + 2
 b = 10
    

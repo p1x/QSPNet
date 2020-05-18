@@ -106,21 +106,28 @@ namespace QSP.CodeAnalysis {
         private void EmitAssignmentStatement(ILProcessor il, BoundAssignmentStatement statement) {
             var variableDefinition = TryEmitVariableDefinition(il, statement.Variable);
             EmitExpression(il, statement.Expression);
-            //il.Emit(OpCodes.Dup);
             il.Emit(OpCodes.Stloc, variableDefinition);
         }
 
         private void EmitExpressionStatement(ILProcessor il, BoundExpressionStatement statement) {
             EmitExpression(il, statement.Expression);
-            //il.Emit(OpCodes.Dup);
-            il.Emit(OpCodes.Call, GetMethodReference("System.Console", "WriteLine", new []{ "System.Int32" }));
-        }
 
+            switch (statement.Expression.Type) {
+                case BoundType.Integer:
+                    il.Emit(OpCodes.Call, GetMethodReference("System.Console", "WriteLine", new []{ "System.Int32" }));
+                    break;
+                case BoundType.String:
+                    il.Emit(OpCodes.Call, GetMethodReference("System.Console", "WriteLine", new []{ "System.String" }));
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
+        }
 
         private readonly struct MethodSignature : IEquatable<MethodSignature> {
             public MethodSignature(string typeName, string methodName, string[] parameterTypeNames) {
-                if (parameterTypeNames.Length < 1 || parameterTypeNames.Length > 5)
-                    throw new ArgumentException("parameterTypeNames.Length < 1 || parameterTypeNames.Length > 5", nameof(parameterTypeNames));
+                if (parameterTypeNames.Length > 5)
+                    throw new ArgumentException("parameterTypeNames.Length > 5", nameof(parameterTypeNames));
                 
                 TypeName = typeName;
                 MethodName = methodName;
@@ -138,6 +145,9 @@ namespace QSP.CodeAnalysis {
             }
 
             public override int GetHashCode() {
+                if (ParameterTypeNames.Length == 0)
+                    return HashCode.Combine(TypeName, MethodName);
+                
                 var p = ParameterTypeNames.Length switch {
                     1 => ParameterTypeNames[0].GetHashCode(),
                     2 => HashCode.Combine(ParameterTypeNames[0], ParameterTypeNames[1]),
@@ -232,7 +242,7 @@ namespace QSP.CodeAnalysis {
                     break;
                 }
                 case BoundType.String: {
-                    il.Emit(OpCodes.Ldc_I4, (string)expression.Value);
+                    il.Emit(OpCodes.Ldstr, (string)expression.Value);
                     break;
                 }
                 default:
@@ -271,7 +281,17 @@ namespace QSP.CodeAnalysis {
                     il.Emit(OpCodes.Neg);
                     break;
                 case BoundUnaryOperatorKind.Input:
-                    il.Emit(OpCodes.Nop); // TODO
+                    switch (expression.Operand.Type) {
+                        case BoundType.Integer:
+                            il.Emit(OpCodes.Call, GetMethodReference("System.Console", "WriteLine", new []{ "System.Int32" }));
+                            break;
+                        case BoundType.String:
+                            il.Emit(OpCodes.Call, GetMethodReference("System.Console", "WriteLine", new []{ "System.String" }));
+                            break;
+                        default:
+                            throw new ArgumentOutOfRangeException();
+                    }
+                    il.Emit(OpCodes.Call, GetMethodReference("System.Console", "ReadLine", Array.Empty<string>()));
                     break;
                 default:
                     throw new ArgumentOutOfRangeException();
