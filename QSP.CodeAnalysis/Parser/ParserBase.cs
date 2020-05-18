@@ -1,4 +1,6 @@
-﻿namespace QSP.CodeAnalysis {
+﻿using System;
+
+namespace QSP.CodeAnalysis {
     public abstract class ParserBase {
         private readonly string _text;
         private readonly Lexer _lexer;
@@ -51,7 +53,8 @@
 
         protected SyntaxToken MatchEndOfStatement() {
             if(_current.Kind == SyntaxTokenKind.EndOfLine ||
-               _current.Kind == SyntaxTokenKind.Ampersand)
+               _current.Kind == SyntaxTokenKind.Ampersand || 
+               _current.Kind == SyntaxTokenKind.EndOfFile)
                 return Next();
             
             _diagnostics.ReportUnexpectedEndOfStatementToken(_current);

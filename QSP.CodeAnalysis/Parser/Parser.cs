@@ -9,8 +9,13 @@ namespace QSP.CodeAnalysis {
         protected override CompilationUnitSyntax ParseCore() {
             var statements = new List<StatementSyntax>();
             while (Current.Kind != SyntaxTokenKind.EndOfFile) {
+                if (Current.Kind == SyntaxTokenKind.EndOfLine) {
+                    Next();
+                    continue;
+                }
+                
                 var startToken = Current;
-
+                
                 statements.Add(ParseStatement());
 
                 // ParseStatement should always consume at least one token,
