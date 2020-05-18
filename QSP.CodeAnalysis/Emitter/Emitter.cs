@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
-using System.IO;
 using System.Linq;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
@@ -13,13 +12,13 @@ namespace QSP.CodeAnalysis {
         private const string CtorMethodName = ".ctor";
 
         private readonly AssemblyDefinition _assembly;
-        private readonly AssemblyDefinition _runtimeAssembly;
         private readonly IReadOnlyList<AssemblyDefinition> _referenceAssemblies;
         private readonly string _defaultNamespace;
 
-        private Emitter(AssemblyDefinition assembly, AssemblyDefinition runtimeAssembly, IReadOnlyList<AssemblyDefinition> referenceAssemblies) {
+        private readonly Dictionary<VariableSymbol, VariableDefinition> _variables = new Dictionary<VariableSymbol, VariableDefinition>();
+        
+        private Emitter(AssemblyDefinition assembly, IReadOnlyList<AssemblyDefinition> referenceAssemblies) {
             _assembly = assembly;
-            _runtimeAssembly = runtimeAssembly;
             _referenceAssemblies = referenceAssemblies;
             _defaultNamespace = assembly.Name.Name;
         }
@@ -42,7 +41,7 @@ namespace QSP.CodeAnalysis {
             if (runtimeAssembly != null)
                 ImportRuntime(assembly, runtimeAssembly);
             
-            return new Emitter(assembly, runtimeAssembly, referenceAssemblies);
+            return new Emitter(assembly, referenceAssemblies);
         }
 
         private static void ImportRuntime(AssemblyDefinition targetAssembly, AssemblyDefinition runtimeAssembly) => 
@@ -70,6 +69,10 @@ namespace QSP.CodeAnalysis {
             
             _assembly.Write(outputPath);
 
+            // TODO Cleanup
+            _variables.Clear();
+            _methods.Clear();
+            
             return scope.Diagnostics;
         }
 
@@ -82,11 +85,230 @@ namespace QSP.CodeAnalysis {
             
             // create the method body
             var il = method.Body.GetILProcessor();
-            
+
+            foreach (var statement in statements)
+                EmitStatement(il, statement);
+
             il.Append(il.Create(OpCodes.Nop));
             il.Append(il.Create(OpCodes.Ret));
 
             return method;
         }
+
+        private void EmitStatement(ILProcessor il, BoundStatement statement) {
+            switch (statement) {
+                case BoundAssignmentStatement x: EmitAssignmentStatement(il, x); break;
+                case BoundExpressionStatement x: EmitExpressionStatement(il, x); break;
+                default: throw new ArgumentOutOfRangeException(nameof(statement));
+            }
+        }
+
+        private void EmitAssignmentStatement(ILProcessor il, BoundAssignmentStatement statement) {
+            var variableDefinition = TryEmitVariableDefinition(il, statement.Variable);
+            EmitExpression(il, statement.Expression);
+            //il.Emit(OpCodes.Dup);
+            il.Emit(OpCodes.Stloc, variableDefinition);
+        }
+
+        private void EmitExpressionStatement(ILProcessor il, BoundExpressionStatement statement) {
+            EmitExpression(il, statement.Expression);
+            //il.Emit(OpCodes.Dup);
+            il.Emit(OpCodes.Call, GetMethodReference("System.Console", "WriteLine", new []{ "System.Int32" }));
+        }
+
+
+        private readonly struct MethodSignature : IEquatable<MethodSignature> {
+            public MethodSignature(string typeName, string methodName, string[] parameterTypeNames) {
+                if (parameterTypeNames.Length < 1 || parameterTypeNames.Length > 5)
+                    throw new ArgumentException("parameterTypeNames.Length < 1 || parameterTypeNames.Length > 5", nameof(parameterTypeNames));
+                
+                TypeName = typeName;
+                MethodName = methodName;
+                ParameterTypeNames = parameterTypeNames;
+            }
+
+            public string TypeName { get; }
+
+            public string MethodName { get; }
+
+            public string[] ParameterTypeNames { get; }
+
+            public bool Equals(MethodSignature other) {
+                return TypeName == other.TypeName && MethodName == other.MethodName && ParameterTypeNames.Equals(other.ParameterTypeNames);
+            }
+
+            public override int GetHashCode() {
+                var p = ParameterTypeNames.Length switch {
+                    1 => ParameterTypeNames[0].GetHashCode(),
+                    2 => HashCode.Combine(ParameterTypeNames[0], ParameterTypeNames[1]),
+                    3 => HashCode.Combine(ParameterTypeNames[0], ParameterTypeNames[1], ParameterTypeNames[2]),
+                    4 => HashCode.Combine(ParameterTypeNames[0], ParameterTypeNames[1], ParameterTypeNames[2], ParameterTypeNames[3]),
+                    5 => HashCode.Combine(ParameterTypeNames[0], ParameterTypeNames[1], ParameterTypeNames[2], ParameterTypeNames[3], ParameterTypeNames[4]),
+                    _ => throw new NotSupportedException()
+                };
+
+                return HashCode.Combine(TypeName, MethodName, p);
+            }
+
+            public override bool Equals(object? obj) => obj is MethodSignature other && Equals(other);
+            public static bool operator ==(MethodSignature left, MethodSignature right) => left.Equals(right);
+            public static bool operator !=(MethodSignature left, MethodSignature right) => !left.Equals(right);
+        }
+        
+        private readonly Dictionary<MethodSignature, MethodReference> _methods = new Dictionary<MethodSignature, MethodReference>();
+        
+        private MethodReference GetMethodReference(string typeName, string methodName, string[] parameterTypeNames) {
+            var key = new MethodSignature(typeName, methodName, parameterTypeNames);
+            if (_methods.TryGetValue(key, out var methodReference))
+                return methodReference;
+
+            methodReference = ImportMethodReference(typeName, methodName, parameterTypeNames);
+            _methods.Add(key, methodReference);
+            return methodReference;
+        }
+        
+        private MethodReference ImportMethodReference(string typeName, string methodName, string[] parameterTypeNames) {
+            var foundTypes = _referenceAssemblies.SelectMany(a => a.Modules)
+                .SelectMany(m => m.Types)
+                .Where(t => t.FullName == typeName)
+                .ToArray();
+            if (foundTypes.Length == 1)
+            {
+                var foundType = foundTypes[0];
+                var methods = foundType.Methods.Where(m => m.Name == methodName);
+
+                foreach (var method in methods)
+                {
+                    if (method.Parameters.Count != parameterTypeNames.Length)
+                        continue;
+
+                    var allParametersMatch = true;
+
+                    for (var i = 0; i < parameterTypeNames.Length; i++)
+                    {
+                        if (method.Parameters[i].ParameterType.FullName != parameterTypeNames[i])
+                        {
+                            allParametersMatch = false;
+                            break;
+                        }
+                    }
+
+                    if (!allParametersMatch)
+                        continue;
+
+                    return _assembly.MainModule.ImportReference(method);
+                }
+
+                //_diagnostics.ReportRequiredMethodNotFound(typeName, methodName, parameterTypeNames);
+                return null!;
+            }
+            else if (foundTypes.Length == 0)
+            {
+                //_diagnostics.ReportRequiredTypeNotFound(null, typeName);
+            }
+            else
+            {
+                //_diagnostics.ReportRequiredTypeAmbiguous(null, typeName, foundTypes);
+            }
+
+            return null!;
+        }
+        
+        private void EmitExpression(ILProcessor il, BoundExpression expression) {
+            switch (expression) {
+                case BoundLiteralExpression  x: EmitLiteralExpression(il, x); break;
+                case BoundVariableExpression x: EmitVariableExpression(il, x); break;
+                case BoundUnaryExpression    x: EmitUnaryExpression(il, x); break;
+                case BoundBinaryExpression   x: EmitBinaryExpression(il, x); break;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(expression));
+            }
+        }
+
+        private static void EmitLiteralExpression(ILProcessor il, BoundLiteralExpression expression) {
+            switch (expression.Type) {
+                case BoundType.Integer: {
+                    il.Emit(OpCodes.Ldc_I4, (int)expression.Value);
+                    break;
+                }
+                case BoundType.String: {
+                    il.Emit(OpCodes.Ldc_I4, (string)expression.Value);
+                    break;
+                }
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
+        }
+
+        private void EmitVariableExpression(ILProcessor il, BoundVariableExpression expression) {
+            var variableDefinition = TryEmitVariableDefinition(il, expression.Variable);
+
+            il.Emit(OpCodes.Ldloc, variableDefinition);
+        }
+
+        private VariableDefinition TryEmitVariableDefinition(ILProcessor il, VariableSymbol variableSymbol) {
+            if (_variables.TryGetValue(variableSymbol, out var variableDefinition))
+                return variableDefinition;
+            
+            var typeReference = GetTypeReference(variableSymbol.Type);
+            variableDefinition = new VariableDefinition(typeReference);
+
+            il.Body.Variables.Add(variableDefinition);
+
+            _variables.Add(variableSymbol, variableDefinition);
+
+            return variableDefinition;
+        }
+
+        private void EmitUnaryExpression(ILProcessor il, BoundUnaryExpression expression) {
+            EmitExpression(il, expression.Operand);
+
+            switch (expression.Operator.Kind) {
+                case BoundUnaryOperatorKind.Identity:
+                    // nop
+                    break;
+                case BoundUnaryOperatorKind.Negation:
+                    il.Emit(OpCodes.Neg);
+                    break;
+                case BoundUnaryOperatorKind.Input:
+                    il.Emit(OpCodes.Nop); // TODO
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }            
+        }
+
+        private void EmitBinaryExpression(ILProcessor il, BoundBinaryExpression expression) {
+            EmitExpression(il, expression.Left);
+            EmitExpression(il, expression.Right);
+
+            switch (expression.Operator.Kind) {
+                case BoundBinaryOperatorKind.Addition:
+                    il.Emit(OpCodes.Add);
+                    break;
+                case BoundBinaryOperatorKind.Subtraction:
+                    il.Emit(OpCodes.Sub);
+                    break;
+                case BoundBinaryOperatorKind.Multiplication:
+                    il.Emit(OpCodes.Mul);
+                    break;
+                case BoundBinaryOperatorKind.Division:
+                    il.Emit(OpCodes.Div);
+                    break;
+                case BoundBinaryOperatorKind.Modulus:
+                    il.Emit(OpCodes.Rem);
+                    break;
+                case BoundBinaryOperatorKind.Concatenation:
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
+        }
+        
+        private TypeReference GetTypeReference(BoundType boundType) =>
+            boundType switch {
+                BoundType.Integer => _assembly.MainModule.TypeSystem.Int32,
+                BoundType.String => _assembly.MainModule.TypeSystem.String,
+                _ => throw new ArgumentOutOfRangeException(nameof(boundType), boundType, null)
+            };
     }
 }
