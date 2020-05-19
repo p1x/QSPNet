@@ -48,11 +48,9 @@ namespace QSP.CodeAnalysis {
                 case ')':
                     return ConsumeSingleCharToken(SyntaxTokenKind.CloseParenthesis, _position);
                 case 'M': case 'm':
-                    return TryConsumeModOperator(_position) ?? ConsumeIdentifier(_position);
-                case 'I': case 'i':
-                    return TryConsumeInputOperator(_position) ?? ConsumeIdentifier(_position);
+                    return TryConsumeModOperator(_position) ?? ConsumeIdentifierOrKeyword(_position);
                 case '_':
-                    return TryConsumeContinueLineToken(_position) ?? ConsumeIdentifier(_position);
+                    return TryConsumeContinueLineToken(_position) ?? ConsumeIdentifierOrKeyword(_position);
                 case '\r':
                     return TryConsumeEndOfLineToken(_position) ?? ConsumeBadCharacter(_position);
                 case ' ':
@@ -64,7 +62,7 @@ namespace QSP.CodeAnalysis {
                     return ConsumeStringToken(_position);
                 default:
                     return char.IsLetter(current) || current == '$'
-                        ? ConsumeIdentifier(_position)
+                        ? ConsumeIdentifierOrKeyword(_position)
                         : ConsumeBadCharacter(_position);
             }
         }
@@ -127,12 +125,18 @@ namespace QSP.CodeAnalysis {
             return new SyntaxToken(SyntaxTokenKind.String, start, GetCurrentTokenText(start), value);
         }
 
-        private SyntaxToken ConsumeIdentifier(int start) {
+        private SyntaxToken ConsumeIdentifierOrKeyword(int start) {
             do
                 _position++;
             while (_position < _text.Length && (char.IsLetter(_text[_position]) || _text[_position] == '_'));
+
+            var text = GetCurrentTokenText(start).ToUpperInvariant();
+            var kind = text switch {
+                "INPUT" => SyntaxTokenKind.InputFunc,
+                _       => SyntaxTokenKind.Identifier
+            };
             
-            return new SyntaxToken(SyntaxTokenKind.Identifier, start, GetCurrentTokenText(start));
+            return new SyntaxToken(kind, start, GetCurrentTokenText(start));
         }
 
         private SyntaxToken? TryConsumeModOperator(int start) {
@@ -142,19 +146,6 @@ namespace QSP.CodeAnalysis {
             
             _position += 3;
             return new SyntaxToken(SyntaxTokenKind.Mod, start, GetCurrentTokenText(start));
-        }
-
-        private SyntaxToken? TryConsumeInputOperator(int start) {
-            const string su = "INPUT";
-            const string sl = "input";
-            
-            for (var i = 0; i < su.Length; i++) {
-                if (Peek(i) != su[i] && Peek(i) != sl[i])
-                    return null;
-            }
-
-            _position += su.Length;
-            return new SyntaxToken(SyntaxTokenKind.Input, start, GetCurrentTokenText(start));
         }
 
         private SyntaxToken? TryConsumeContinueLineToken(int start) {

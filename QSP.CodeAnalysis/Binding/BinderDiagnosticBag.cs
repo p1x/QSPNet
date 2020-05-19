@@ -15,5 +15,13 @@
         public void ReportUndefinedLiteralType() {
             throw new System.NotImplementedException();
         }
+
+        public void ReportInvalidArgumentType() {
+            throw new System.NotImplementedException();
+        }
+
+        public void ReportWrongArgumentCount() {
+            throw new System.NotImplementedException();
+        }
     }
 }

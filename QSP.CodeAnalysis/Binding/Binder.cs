@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 
@@ -56,6 +56,7 @@ namespace QSP.CodeAnalysis {
                 UnaryExpressionSyntax         x => BindUnaryExpression(x),
                 BinaryExpressionSyntax        x => BindBinaryExpression(x),
                 ParenthesisedExpressionSyntax x => BindParenthesisedExpression(x),
+                FunctionExpressionSyntax      x => BindFuncExpression(x),
                 _ => throw new ArgumentOutOfRangeException(nameof(expression))
             };
 
@@ -128,6 +129,34 @@ namespace QSP.CodeAnalysis {
 
         private BoundExpression BindParenthesisedExpression(ParenthesisedExpressionSyntax expression) => 
             BindExpression(expression.Expression);
+
+        private BoundExpression BindFuncExpression(FunctionExpressionSyntax expression) {
+            // TODO Add ability for arguments type checking even if arguments count not macth  
+            
+            var functionSymbol = FunctionSymbol.Get(expression.Keyword.Kind);
+            if (functionSymbol == null)
+                // Reported in parser 
+                return BoundErrorExpression.Instance;
+
+            var nodeSyntaxArray = expression.Arguments.Nodes;
+            if (functionSymbol.ArgumentsTypes.Length != nodeSyntaxArray.Length) {
+                _diagnostics.ReportWrongArgumentCount();
+                return BoundErrorExpression.Instance;
+            }
+
+            var arguments = ImmutableArray.CreateBuilder<BoundExpression>();
+            for (var i = 0; i < nodeSyntaxArray.Length; i++) {
+                var boundArgument = BindExpression(nodeSyntaxArray[i]);
+                if (boundArgument.Kind != BoundNodeKind.ErrorExpression && boundArgument.Type != functionSymbol.ArgumentsTypes[i]) {
+                    _diagnostics.ReportInvalidArgumentType();
+                    arguments.Add(BoundErrorExpression.Instance);
+                } else {
+                    arguments.Add(boundArgument);
+                }
+            }
+            
+            return new BoundFunctionExpression(functionSymbol, arguments.ToImmutable());
+        }
 
         private static BoundType BindType(SyntaxTokenKind tokenKind) =>
             tokenKind switch {

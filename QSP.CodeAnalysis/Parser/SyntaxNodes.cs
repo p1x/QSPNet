@@ -82,6 +82,31 @@ namespace QSP.CodeAnalysis {
                 yield return Token;
             }   
         }
+        public class FunctionExpressionSyntax : ExpressionSyntax {
+            public FunctionExpressionSyntax(SyntaxToken keyword, SyntaxToken? openParenthesis, SeparatedListSyntax<ExpressionSyntax> arguments, SyntaxToken? closeParenthesis) {
+                Keyword = keyword ?? throw new ArgumentNullException(nameof(keyword)); 
+                OpenParenthesis = openParenthesis; 
+                Arguments = arguments ?? throw new ArgumentNullException(nameof(arguments)); 
+                CloseParenthesis = closeParenthesis; 
+            }
+
+            public override SyntaxExpressionKind ExpressionKind => SyntaxExpressionKind.Function;
+
+            public SyntaxToken Keyword { get; }
+            public SyntaxToken? OpenParenthesis { get; }
+            public SeparatedListSyntax<ExpressionSyntax> Arguments { get; }
+            public SyntaxToken? CloseParenthesis { get; }
+
+            public override IEnumerable<object> GetChildren() {
+                yield return Keyword;
+                if (OpenParenthesis != null)  
+                    yield return OpenParenthesis;
+                foreach (var item in Arguments)
+                    yield return item;
+                if (CloseParenthesis != null)  
+                    yield return CloseParenthesis;
+            }   
+        }
         public class ExpressionStatementSyntax : StatementSyntax {
             public ExpressionStatementSyntax(ExpressionSyntax expression, SyntaxToken endToken) : base(endToken) {
                 Expression = expression ?? throw new ArgumentNullException(nameof(expression)); 

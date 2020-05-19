@@ -230,6 +230,7 @@ namespace QSP.CodeAnalysis {
                 case BoundVariableExpression x: EmitVariableExpression(il, x); break;
                 case BoundUnaryExpression    x: EmitUnaryExpression(il, x); break;
                 case BoundBinaryExpression   x: EmitBinaryExpression(il, x); break;
+                case BoundFunctionExpression x: EmitFunctionExpression(il, x); break;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(expression));
             }
@@ -270,6 +271,28 @@ namespace QSP.CodeAnalysis {
             return variableDefinition;
         }
 
+        private void EmitFunctionExpression(ILProcessor il, BoundFunctionExpression expression) {
+            if (expression.Function == FunctionSymbol.Input) {
+                foreach (var argument in expression.Arguments) {
+                    EmitExpression(il, argument);
+                }
+                
+                switch (expression.Arguments[0].Type) {
+                    case BoundType.Integer:
+                        il.Emit(OpCodes.Call, GetMethodReference("System.Console", "WriteLine", new []{ "System.Int32" }));
+                        break;
+                    case BoundType.String:
+                        il.Emit(OpCodes.Call, GetMethodReference("System.Console", "WriteLine", new []{ "System.String" }));
+                        break;
+                    default:
+                        throw new ArgumentOutOfRangeException();
+                }
+                il.Emit(OpCodes.Call, GetMethodReference("System.Console", "ReadLine", Array.Empty<string>()));
+                //il.Emit(OpCodes.Dup);
+            } else
+                throw new ArgumentException($"Unknown function '{expression.Function.Name}'", nameof(expression));
+        }
+
         private void EmitUnaryExpression(ILProcessor il, BoundUnaryExpression expression) {
             EmitExpression(il, expression.Operand);
 
@@ -280,22 +303,9 @@ namespace QSP.CodeAnalysis {
                 case BoundUnaryOperatorKind.Negation:
                     il.Emit(OpCodes.Neg);
                     break;
-                case BoundUnaryOperatorKind.Input:
-                    switch (expression.Operand.Type) {
-                        case BoundType.Integer:
-                            il.Emit(OpCodes.Call, GetMethodReference("System.Console", "WriteLine", new []{ "System.Int32" }));
-                            break;
-                        case BoundType.String:
-                            il.Emit(OpCodes.Call, GetMethodReference("System.Console", "WriteLine", new []{ "System.String" }));
-                            break;
-                        default:
-                            throw new ArgumentOutOfRangeException();
-                    }
-                    il.Emit(OpCodes.Call, GetMethodReference("System.Console", "ReadLine", Array.Empty<string>()));
-                    break;
                 default:
                     throw new ArgumentOutOfRangeException();
-            }            
+            }
         }
 
         private void EmitBinaryExpression(ILProcessor il, BoundBinaryExpression expression) {

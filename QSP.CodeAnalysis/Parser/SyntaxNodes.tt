@@ -22,6 +22,12 @@
         }),
         ("Literal", new[] {
             ("Token", MemberType.Token, false),
+        }),
+        ("Function", new [] {
+            ("Keyword", MemberType.Token, false),
+            ("OpenParenthesis", MemberType.Token, true),
+            ("Arguments", MemberType.SeparatedExpressionList, false),
+            ("CloseParenthesis", MemberType.Token, true),
         })
     };
     var statements = new (string name, (string name, MemberType type, bool isOptional)[] members)[] {
@@ -38,10 +44,10 @@
 using System;
 using System.Collections.Generic;
 
-namespace QSPNet.Interpreter {
+namespace QSP.CodeAnalysis {
 <#
     foreach (var e in expressions) {
-        var ctorParams = e.members.Select(x => GetTypeName(x.type) + " " + ToLocalName(x.name));
+        var ctorParams = e.members.Select(x => GetTypeName(x.type, x.isOptional) + " " + ToLocalName(x.name));
         var ctorParamsStr = string.Join(", ", ctorParams);
 #>
         public class <#= e.name #>ExpressionSyntax : ExpressionSyntax {
@@ -58,19 +64,36 @@ namespace QSPNet.Interpreter {
             public override SyntaxExpressionKind ExpressionKind => SyntaxExpressionKind.<#= e.name #>;
 
 <#
-            foreach (var (name, type, _) in e.members) {
+            foreach (var (name, type, isOptional) in e.members) {
 #>
-            public <#= GetTypeName(type) #> <#= name #> { get; }
+            public <#= GetTypeName(type, isOptional) #> <#= name #> { get; }
 <#
             }
 #>
 
             public override IEnumerable<object> GetChildren() {
 <#
-            foreach (var (name, _, _) in e.members) {
+            foreach (var (name, type, isOptional) in e.members) {
+                if (isOptional) {
+#>
+                if (<#= name #> != null)  
+<#
+                    PushIndent("    ");
+                }
+                
+                if (type == MemberType.SeparatedList || type == MemberType.SeparatedExpressionList) {
+#>
+                foreach (var item in <#= name #>)
+                    yield return item;
+<#                    
+                } else {
 #>
                 yield return <#= name #>;
 <#
+                }
+                
+                if (isOptional)
+                    PopIndent();
             }
 #>
             }   
@@ -79,7 +102,7 @@ namespace QSPNet.Interpreter {
     }
     
     foreach (var s in statements) {
-        var ctorParams = s.members.Select(x => GetTypeName(x.type) + " " + ToLocalName(x.name));
+        var ctorParams = s.members.Select(x => GetTypeName(x.type, x.isOptional) + " " + ToLocalName(x.name));
         var ctorParamsStr = string.Join(", ", ctorParams);
 #>
         public class <#= s.name #>StatementSyntax : StatementSyntax {
@@ -96,9 +119,9 @@ namespace QSPNet.Interpreter {
             public override SyntaxStatementKind StatementKind => SyntaxStatementKind.<#= s.name #>;
 
 <#
-            foreach (var (name, type, _) in s.members) {
+            foreach (var (name, type, isOptional) in s.members) {
 #>
-            public <#= GetTypeName(type) #> <#= name #> { get; }
+            public <#= GetTypeName(type, isOptional) #> <#= name #> { get; }
 <#
             }
 #>
@@ -128,17 +151,21 @@ namespace QSPNet.Interpreter {
         return localName;
     }
 
-    private string GetTypeName(MemberType type) =>
+    private string GetTypeName(MemberType type, bool isOptional) =>
         type switch {
             MemberType.Expression => "ExpressionSyntax",
             MemberType.Statement => "StatementSyntax",
             MemberType.Token => "SyntaxToken",
+            MemberType.SeparatedList => "SeparatedListSyntax",
+            MemberType.SeparatedExpressionList => "SeparatedListSyntax<ExpressionSyntax>",
             _ => throw new Exception()
-        };
+        } + (isOptional ? "?" : "");
 
     private enum MemberType {
         Expression,
         Statement,
-        Token
+        Token,
+        SeparatedList,
+        SeparatedExpressionList
     }
 #>

@@ -3,6 +3,5 @@
         Undefined,
         Identity,
         Negation,
-        Input,
     }
 }

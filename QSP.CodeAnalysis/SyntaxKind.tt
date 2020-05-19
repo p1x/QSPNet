@@ -5,12 +5,14 @@
 <#@ import namespace="System.Linq" #>
 <#
 
+    // Special tokens
     var specialTokens = new[] {
         "EndOfFile",
         "EndOfLine",
         "Unknown"
     };
 
+    // These tokens has no strict text representation 
     var customParseTokens = new[] {
         "WhiteSpace",
         "Number",
@@ -18,29 +20,39 @@
         "Identifier"
     };
 
+    // All these tokens have some text representation
     var operatorTokens = new (string name, string text, int binaryPrecedence, int unaryPrecedence)[] {
         ("Ampersand", "&", 1, 0),
         ("Equals",    "=", 2, 0),
         ("Plus",      "+", 3, 1),
         ("Minus",     "-", 3, 1),
         ("Mod",     "MOD", 4, 0),
-        ("Input", "INPUT", 0, 1),
         ("Star",      "*", 5, 0),
         ("Slash",     "/", 5, 0),
     };
     var nonOperatorTokens = new (string name, string text)[] {
         ("OpenParenthesis",  "("),
         ("CloseParenthesis", ")"),
-        ("ContinueLine",     "_")
+        ("ContinueLine",     "_"),
+        ("Comma",            ",")
     };
-    var parseableTokens = operatorTokens.Select(x => (x.name, x.text)).Concat(nonOperatorTokens).ToList();
-    
+    var funcs = new (string name, string text, int arguments)[] {
+        ("Input", "INPUT", 1)
+    };
+    var parseableTokens = Enumerable.Empty<(string name, string)>()
+        .Concat(operatorTokens.Select(x => (x.name, x.text)))
+        .Concat(nonOperatorTokens)
+        .Concat(funcs.Select(x => (name: x.name + "Func", x.text)))
+        .ToList();
+
+    // Not tokens
     var expressions = new[] {
         "Literal",
         "Unary",
         "Binary",
         "Name",
-        "Parenthesised"
+        "Parenthesised",
+        "Function"
     };
 
     var statements = new[] {
@@ -79,10 +91,6 @@
     }
     void WriteIndent5() {
         WriteIndent4();
-        WriteIndent1();
-    }
-    void WriteIndent6() {
-        WriteIndent5();
         WriteIndent1();
     }
 
@@ -142,12 +150,12 @@ namespace QSP.CodeAnalysis {
 <#
     }
 #>
-        public static string GetText(this SyntaxKind kind) => GetText(kind.AsToken());  
+        public static string GetText(this SyntaxKind kind) => GetText(kind.AsToken());
         public static string GetText(this SyntaxTokenKind kind) =>
             kind switch {
 <#
 
-    var maxParseableNameLength = parseableTokens.Max(x => x.name.Length);
+    var maxParseableNameLength = parseableTokens.Select(x => x.name.Length).Max();
     foreach (var (name, text) in parseableTokens) {
         WriteIndent4();
         Write("SyntaxTokenKind.");
@@ -157,7 +165,7 @@ namespace QSP.CodeAnalysis {
         WriteLine("\",");
     }
 #>
-                _ => kind.ToString()
+                _ => kind.ToString() ?? string.Empty
             };
         
         public static Precedence GetUnaryPrecedence(this SyntaxKind kind) => GetUnaryPrecedence(kind.AsToken());
@@ -191,6 +199,22 @@ namespace QSP.CodeAnalysis {
     }
 #>
                 _ => 0
+            };
+
+        public static int GetFuncArgumentsCount(this SyntaxTokenKind kind) =>
+            kind switch {
+<#
+    var maxFuncNameLength = funcs.Max(x => (x.name + "Func").Length);
+    foreach (var (name, _, arguments) in funcs) {
+        WriteIndent4();
+        Write("SyntaxTokenKind.");
+        Write((name + "Func").PadRight(maxFuncNameLength));
+        Write(" => ");
+        Write(arguments.ToString());
+        WriteLine(",");
+    }
+#>
+                _ => -1
             };
     }
 }

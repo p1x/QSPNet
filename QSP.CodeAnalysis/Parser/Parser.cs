@@ -79,14 +79,44 @@ namespace QSP.CodeAnalysis {
 
             return ParsePrimaryExpression();
         }
-        
+
         private ExpressionSyntax ParsePrimaryExpression() =>
             Current.Kind switch {
                 SyntaxTokenKind.OpenParenthesis => ParseParenthesisedExpression(),
-                SyntaxTokenKind.Number => new LiteralExpressionSyntax(Match(SyntaxTokenKind.Number)),
-                SyntaxTokenKind.String => new LiteralExpressionSyntax(Match(SyntaxTokenKind.String)),
-                _ => new NameExpressionSyntax(Match(SyntaxTokenKind.Identifier))
+                SyntaxTokenKind.Number          => new LiteralExpressionSyntax(Match(SyntaxTokenKind.Number)),
+                SyntaxTokenKind.String          => new LiteralExpressionSyntax(Match(SyntaxTokenKind.String)),
+                SyntaxTokenKind.InputFunc       => ParseFunctionExpression(SyntaxTokenKind.InputFunc),
+                _                               => new NameExpressionSyntax(Match(SyntaxTokenKind.Identifier))
             };
+
+        private FunctionExpressionSyntax ParseFunctionExpression(SyntaxTokenKind funcKind) {
+            var argumentsCount = funcKind.GetFuncArgumentsCount();
+            var keyword = Match(funcKind);
+
+            var argumentsBuilder  = ImmutableArray.CreateBuilder<ExpressionSyntax>();
+            var separatorsBuilder = ImmutableArray.CreateBuilder<SyntaxToken>();
+            SyntaxToken? openParenthesis = null;
+            SyntaxToken? closeParenthesis = null;
+            if (argumentsCount == 1) {
+                argumentsBuilder.Add(ParseExpression(parentPrecedence: 1 << 16));
+            } else {
+                openParenthesis = Match(SyntaxTokenKind.OpenParenthesis);
+                do {
+                    var argument = ParseExpression(true);
+                    argumentsBuilder.Add(argument);
+                    var separator = Match(SyntaxTokenKind.Comma);
+                    separatorsBuilder.Add(separator);
+                    if (Current.Kind == SyntaxTokenKind.CloseParenthesis ||
+                        Current.Kind == SyntaxTokenKind.EndOfFile ||
+                        Current.Kind == SyntaxTokenKind.EndOfLine)
+                        break;
+                } while (true);
+                closeParenthesis = Match(SyntaxTokenKind.CloseParenthesis);
+            }
+
+            var arguments = new SeparatedListSyntax<ExpressionSyntax>(argumentsBuilder.ToImmutable(), separatorsBuilder.ToImmutable());
+            return new FunctionExpressionSyntax(keyword, openParenthesis, arguments, closeParenthesis);
+        }
 
         private ExpressionSyntax ParseParenthesisedExpression() {
             var open = Match(SyntaxTokenKind.OpenParenthesis);

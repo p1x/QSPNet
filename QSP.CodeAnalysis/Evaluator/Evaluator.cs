@@ -61,7 +61,6 @@ namespace QSP.CodeAnalysis {
             e.Operator.Kind switch {
                 BoundUnaryOperatorKind.Identity  => EvaluateExpression(e.Operand),
                 BoundUnaryOperatorKind.Negation  => -(int)EvaluateExpression(e.Operand),
-                BoundUnaryOperatorKind.Input     => EvaluateInput(EvaluateExpression(e.Operand)),
                 _ => string.Empty
             };
 

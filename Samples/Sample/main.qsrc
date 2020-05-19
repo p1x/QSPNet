@@ -1,5 +1,5 @@
 ﻿'Welcome!'
-'Hello ' + input 'Enter your name:' + '!'
+'Hello ' + input input ('Enter ' + 'welcome message:') + '!'
 
 a = 1 + 2
 b = 10

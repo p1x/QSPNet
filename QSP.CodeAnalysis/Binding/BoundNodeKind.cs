@@ -9,5 +9,6 @@
         UnaryExpression,
         BinaryExpression,
         VariableExpression,
+        FunctionExpression
     }
 }
