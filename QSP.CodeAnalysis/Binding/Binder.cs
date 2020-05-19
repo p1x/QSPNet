@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 
@@ -97,9 +97,6 @@ namespace QSP.CodeAnalysis {
             if (operand.Kind == BoundNodeKind.ErrorExpression)
                 return BoundErrorExpression.Instance;
 
-            if (expression.Operator.IsManufactured)
-                return BoundErrorExpression.Instance;
-
             var @operator = BoundUnaryOperator.Bind(expression.Operator.Kind, operand.Type);
             if (@operator.Kind == BoundUnaryOperatorKind.Undefined) {
                 _diagnostics.ReportUndefinedUnaryOperator();
@@ -115,9 +112,6 @@ namespace QSP.CodeAnalysis {
             if (left.Kind == BoundNodeKind.ErrorExpression || right.Kind == BoundNodeKind.ErrorExpression)
                 return BoundErrorExpression.Instance;
 
-            if (expression.Operator.IsManufactured)
-                return BoundErrorExpression.Instance;
-            
             var @operator = BoundBinaryOperator.Bind(expression.Operator.Kind, left.Type, right.Type);
             if (@operator.Kind == BoundBinaryOperatorKind.Undefined) {
                 _diagnostics.ReportUndefinedBinaryOperator();
