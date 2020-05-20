@@ -1,5 +1,5 @@
 ﻿'Welcome!'
-pl 'Hello ' + input input ('Enter ' + 'welcome message:') + '!'
+*pl 'Hello ' + input input ('Enter ' + 'welcome message:') + '!'
 
 a = 1 + 2
 b = 10

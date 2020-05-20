@@ -23,5 +23,9 @@
         public void ReportWrongArgumentCount() {
             throw new System.NotImplementedException();
         }
+
+        public void ReportNotSupportedModifier() {
+            throw new System.NotImplementedException();
+        }
     }
 }

@@ -144,7 +144,8 @@ namespace QSP.CodeAnalysis {
             }   
         }
         public class ProcedureStatementSyntax : StatementSyntax {
-            public ProcedureStatementSyntax(SyntaxToken keyword, SyntaxToken? openParenthesis, SeparatedListSyntax<ExpressionSyntax> arguments, SyntaxToken? closeParenthesis, SyntaxToken endToken) : base(endToken) {
+            public ProcedureStatementSyntax(SyntaxToken? modifier, SyntaxToken keyword, SyntaxToken? openParenthesis, SeparatedListSyntax<ExpressionSyntax> arguments, SyntaxToken? closeParenthesis, SyntaxToken endToken) : base(endToken) {
+                Modifier = modifier; 
                 Keyword = keyword ?? throw new ArgumentNullException(nameof(keyword)); 
                 OpenParenthesis = openParenthesis; 
                 Arguments = arguments ?? throw new ArgumentNullException(nameof(arguments)); 
@@ -153,12 +154,15 @@ namespace QSP.CodeAnalysis {
 
             public override SyntaxStatementKind StatementKind => SyntaxStatementKind.Procedure;
 
+            public SyntaxToken? Modifier { get; }
             public SyntaxToken Keyword { get; }
             public SyntaxToken? OpenParenthesis { get; }
             public SeparatedListSyntax<ExpressionSyntax> Arguments { get; }
             public SyntaxToken? CloseParenthesis { get; }
 
             public override IEnumerable<object> GetChildren() {
+                if (Modifier != null)  
+                    yield return Modifier;
                 yield return Keyword;
                 if (OpenParenthesis != null)  
                     yield return OpenParenthesis;

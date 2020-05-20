@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Diagnostics;
 
@@ -47,18 +47,13 @@ namespace QSP.CodeAnalysis {
         }
 
         private StatementSyntax ParseProcedureStatement(SyntaxTokenKind kind) {
+            var modifier = TryNext(SyntaxTokenKind.Star);
             var keyword = Match(kind);
-
             var openParenthesis = TryNext(SyntaxTokenKind.OpenParenthesis);
-            
-            var isParenthesised = openParenthesis != null;
-            var arguments = ParseArguments(isParenthesised, 0);
-
-            var closeParenthesis = isParenthesised ? Match(SyntaxTokenKind.CloseParenthesis) : null;
-
+            var arguments = ParseArguments(openParenthesis != null, 0);
+            var closeParenthesis = openParenthesis != null ? Match(SyntaxTokenKind.CloseParenthesis) : null;
             var endOfLineToken = MatchEndOfStatement();
-            
-            return new ProcedureStatementSyntax(keyword, openParenthesis, arguments, closeParenthesis, endOfLineToken);
+            return new ProcedureStatementSyntax(modifier, keyword, openParenthesis, arguments, closeParenthesis, endOfLineToken);
         }
 
         private StatementSyntax ParseExpressionStatement() {

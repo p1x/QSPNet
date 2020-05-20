@@ -40,6 +40,7 @@
             ("Expression", MemberType.Expression, false),
         }),
         ("Procedure", new [] {
+            ("Modifier", MemberType.Token, true),
             ("Keyword", MemberType.Token, false),
             ("OpenParenthesis", MemberType.Token, true),
             ("Arguments", MemberType.SeparatedExpressionList, false),

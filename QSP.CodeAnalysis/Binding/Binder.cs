@@ -52,17 +52,22 @@ namespace QSP.CodeAnalysis {
 
         private BoundStatement BindProcedureStatement(ProcedureStatementSyntax statement) {
             // TODO Add ability for arguments type checking even if arguments count not match  
-            
+
             var procedureSymbol = ProcedureSymbol.Get(statement.Keyword.Kind);
             if (procedureSymbol == null)
                 // Reported in parser 
                 return BoundErrorStatement.Instance;
 
+            if (!procedureSymbol.CanHaveModifier && statement.Modifier != null) {
+                _diagnostics.ReportNotSupportedModifier();
+                return BoundErrorStatement.Instance;
+            }
+            
             var nodeSyntaxArray = statement.Arguments.Nodes;
-             if (procedureSymbol.ArgumentsTypes.Length != nodeSyntaxArray.Length) {
-                 _diagnostics.ReportWrongArgumentCount();
-                 return BoundErrorStatement.Instance;
-             }
+            if (procedureSymbol.ArgumentsTypes.Length != nodeSyntaxArray.Length) {
+                _diagnostics.ReportWrongArgumentCount();
+                return BoundErrorStatement.Instance;
+            }
 
             var arguments = BindArguments(nodeSyntaxArray, procedureSymbol.ArgumentsTypes);
             return new BoundProcedureStatement(procedureSymbol, arguments);
