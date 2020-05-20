@@ -2,49 +2,65 @@
 <#@ assembly name="System.Core" #>
 <#@ import namespace="System.Linq" #>
 <#
-    var expressions = new (string name, (string name, MemberType type, bool isOptional)[] members)[] {
+
+    const string Expression = "ExpressionSyntax";
+    const string Statement = "StatementSyntax";
+    const string Token = "SyntaxToken";
+    const string SeparatedList = "SeparatedListSyntax";
+    const string SeparatedExpressionList = "SeparatedListSyntax<ExpressionSyntax>";
+
+    var expressions = new (string name, (string name, string type, bool isOptional)[] members)[] {
         ("Parenthesised", new[] {
-            ("OpenParenthesis", MemberType.Token, false),
-            ("Expression", MemberType.Expression, false),
-            ("CloseParenthesis", MemberType.Token, false),
+            ("OpenParenthesis", Token, false),
+            ("Expression", Expression, false),
+            ("CloseParenthesis", Token, false),
         }),
         ("Binary", new[] {
-            ("Left", MemberType.Expression, false),
-            ("Operator", MemberType.Token, false),
-            ("Right", MemberType.Expression, false),
+            ("Left", Expression, false),
+            ("Operator", Token, false),
+            ("Right", Expression, false),
         }),
         ("Unary", new[] {
-            ("Operator", MemberType.Token, false),
-            ("Operand", MemberType.Expression, false),
+            ("Operator", Token, false),
+            ("Operand", Expression, false),
         }),
         ("Name", new[] {
-            ("Identifier", MemberType.Token, false),
+            ("Identifier", Token, false),
+            ("ArrayClause", "ArrayClauseSyntax", true),
         }),
         ("Literal", new[] {
-            ("Token", MemberType.Token, false),
+            ("Token", Token, false),
         }),
         ("Function", new [] {
-            ("Keyword", MemberType.Token, false),
-            ("OpenParenthesis", MemberType.Token, true),
-            ("Arguments", MemberType.SeparatedExpressionList, false),
-            ("CloseParenthesis", MemberType.Token, true),
+            ("Keyword", Token, false),
+            ("OpenParenthesis", Token, true),
+            ("Arguments", SeparatedExpressionList, false),
+            ("CloseParenthesis", Token, true),
         })
     };
-    var statements = new (string name, (string name, MemberType type, bool isOptional)[] members)[] {
+    var statements = new (string name, (string name, string type, bool isOptional)[] members)[] {
         ("Expression", new[] {
-            ("Expression", MemberType.Expression, false),
+            ("Expression", Expression, false),
         }),
         ("Assignment", new[] {
-            ("Identifier", MemberType.Token, false),
-            ("Equals", MemberType.Token, false),
-            ("Expression", MemberType.Expression, false),
+            ("Identifier", Token, false),
+            ("ArrayClause", "ArrayClauseSyntax", true),
+            ("Equals", Token, false),
+            ("Expression", Expression, false),
         }),
         ("Procedure", new [] {
-            ("Modifier", MemberType.Token, true),
-            ("Keyword", MemberType.Token, false),
-            ("OpenParenthesis", MemberType.Token, true),
-            ("Arguments", MemberType.SeparatedExpressionList, false),
-            ("CloseParenthesis", MemberType.Token, true),
+            ("Modifier", Token, true),
+            ("Keyword", Token, false),
+            ("OpenParenthesis", Token, true),
+            ("Arguments", SeparatedExpressionList, false),
+            ("CloseParenthesis", Token, true),
+        })
+    };
+    var custom = new (string name, (string name, string type, bool isOptional)[] members)[] {
+        ("ArrayClause", new[] {
+            ("OpenBrace", Token, false),
+            ("Expression", Expression, true),
+            ("CloseBrace", Token, false),
         })
     };
 #>
@@ -53,12 +69,21 @@ using System.Collections.Generic;
 
 namespace QSP.CodeAnalysis {
 <#
-    foreach (var e in expressions) {
-        var ctorParams = e.members.Select(x => GetTypeName(x.type, x.isOptional) + " " + ToLocalName(x.name));
-        var ctorParamsStr = string.Join(", ", ctorParams);
+
+    void writeNodes((string name, (string name, string type, bool isOptional)[] members)[] nodes, string suffix, string baseType, (string name, string type, bool isOptional)[] baseParams) {
+        foreach (var e in nodes) {
+            
+            var parameters = e.members.AsEnumerable();
+            var baseClassCtorCall = "";
+            if (baseParams != null && baseParams.Any()) {
+                baseClassCtorCall += " : base(" + string.Join(", ", baseParams.Select(x => ToLocalName(x.name))) + ") ";
+                parameters = parameters.Concat(baseParams);
+            }
+            var ctorParams = parameters.Select(x => GetTypeName(x.type, x.isOptional) + " " + ToLocalName(x.name));
+            var ctorParamsStr = string.Join(", ", ctorParams);
 #>
-        public class <#= e.name #>ExpressionSyntax : ExpressionSyntax {
-            public <#= e.name #>ExpressionSyntax(<#= ctorParamsStr #>) {
+    public class <#= e.name #><#= suffix #>Syntax : <#= baseType #> {
+        public <#= e.name #><#= suffix #>Syntax(<#= ctorParamsStr #>)<#= baseClassCtorCall #> {
 <#
             foreach (var (name, _, isOptional) in e.members) {
 #>
@@ -66,104 +91,54 @@ namespace QSP.CodeAnalysis {
 <#
             }
 #>
-            }
+        }
 
-            public override SyntaxExpressionKind ExpressionKind => SyntaxExpressionKind.<#= e.name #>;
+        public override Syntax<#= suffix #>Kind <#= suffix #>Kind => Syntax<#= suffix #>Kind.<#= e.name #>;
 
 <#
             foreach (var (name, type, isOptional) in e.members) {
 #>
-            public <#= GetTypeName(type, isOptional) #> <#= name #> { get; }
+        public <#= GetTypeName(type, isOptional) #> <#= name #> { get; }
 <#
             }
 #>
 
-            public override IEnumerable<object> GetChildren() {
+        public override IEnumerable<object> GetChildren() {
 <#
             foreach (var (name, type, isOptional) in e.members) {
                 if (isOptional) {
 #>
-                if (<#= name #> != null)  
+            if (<#= name #> != null)  
 <#
                     PushIndent("    ");
                 }
-                
-                if (type == MemberType.SeparatedList || type == MemberType.SeparatedExpressionList) {
+
+                if (type == SeparatedList || type == SeparatedExpressionList) {
 #>
-                foreach (var item in <#= name #>)
-                    yield return item;
-<#                    
+            foreach (var item in <#= name #>)
+                yield return item;
+<#
                 } else {
 #>
-                yield return <#= name #>;
+            yield return <#= name #>;
 <#
                 }
-                
+
                 if (isOptional)
                     PopIndent();
             }
 #>
-            }   
-        }
-<#
+        }   
     }
-    
-    foreach (var s in statements) {
-        var ctorParams = s.members.Select(x => GetTypeName(x.type, x.isOptional) + " " + ToLocalName(x.name));
-        var ctorParamsStr = string.Join(", ", ctorParams);
-#>
-        public class <#= s.name #>StatementSyntax : StatementSyntax {
-            public <#= s.name #>StatementSyntax(<#= ctorParamsStr #>, SyntaxToken endToken) : base(endToken) {
 <#
-            foreach (var (name, _, isOptional) in s.members) {
-#>
-                <#= name #> = <#= ToLocalName(name) #><#= isOptional ? string.Empty : $" ?? throw new ArgumentNullException(nameof({ToLocalName(name)}))" #>; 
-<#
-            }
-#>
-            }
-
-            public override SyntaxStatementKind StatementKind => SyntaxStatementKind.<#= s.name #>;
-
-<#
-            foreach (var (name, type, isOptional) in s.members) {
-#>
-            public <#= GetTypeName(type, isOptional) #> <#= name #> { get; }
-<#
-            }
-#>
-
-            public override IEnumerable<object> GetChildren() {
-<#
-            foreach (var (name, type, isOptional) in s.members) {
-                if (isOptional) {
-#>
-                if (<#= name #> != null)  
-<#
-                    PushIndent("    ");
-                }
-                
-                if (type == MemberType.SeparatedList || type == MemberType.SeparatedExpressionList) {
-#>
-                foreach (var item in <#= name #>)
-                    yield return item;
-<#                    
-                } else {
-#>
-                yield return <#= name #>;
-<#
-                }
-                
-                if (isOptional)
-                    PopIndent();
-            }
-#>
-                foreach (var child in base.GetChildren())
-                    yield return child;
-            }   
         }
-<#
     }
+
+    writeNodes(expressions, "Expression", "ExpressionSyntax", null);
+    writeNodes(statements, "Statement", "StatementSyntax", new [] {
+        ("EndToken", Token, false)
+    });
+    writeNodes(custom, "", "SyntaxNode", null);
 #>
 }
 
@@ -175,21 +150,5 @@ namespace QSP.CodeAnalysis {
         return localName;
     }
 
-    private string GetTypeName(MemberType type, bool isOptional) =>
-        type switch {
-            MemberType.Expression => "ExpressionSyntax",
-            MemberType.Statement => "StatementSyntax",
-            MemberType.Token => "SyntaxToken",
-            MemberType.SeparatedList => "SeparatedListSyntax",
-            MemberType.SeparatedExpressionList => "SeparatedListSyntax<ExpressionSyntax>",
-            _ => throw new Exception()
-        } + (isOptional ? "?" : "");
-
-    private enum MemberType {
-        Expression,
-        Statement,
-        Token,
-        SeparatedList,
-        SeparatedExpressionList
-    }
+    private string GetTypeName(string type, bool isOptional) => type + (isOptional ? "?" : "");
 #>

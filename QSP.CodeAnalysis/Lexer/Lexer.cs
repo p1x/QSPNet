@@ -47,6 +47,10 @@ namespace QSP.CodeAnalysis {
                     return ConsumeSingleCharToken(SyntaxTokenKind.OpenParenthesis, _position);
                 case ')':
                     return ConsumeSingleCharToken(SyntaxTokenKind.CloseParenthesis, _position);
+                case '[':
+                    return ConsumeSingleCharToken(SyntaxTokenKind.OpenSquareBracket, _position);
+                case ']':
+                    return ConsumeSingleCharToken(SyntaxTokenKind.CloseSquareBracket, _position);
                 case 'M': case 'm':
                     return TryConsumeModOperator(_position) ?? ConsumeIdentifierOrKeyword(_position);
                 case '_':
