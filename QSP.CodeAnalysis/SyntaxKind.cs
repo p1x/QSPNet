@@ -1,39 +1,41 @@
 ﻿﻿namespace QSP.CodeAnalysis {
     public enum SyntaxTokenKind {
-        EndOfFile        = 0x00010000,
-        EndOfLine        = 0x00010001,
-        Unknown          = 0x00010002,
-        WhiteSpace       = 0x00010003,
-        Number           = 0x00010004,
-        String           = 0x00010005,
-        Identifier       = 0x00010006,
-        Ampersand        = 0x00010007,
-        Equals           = 0x00010008,
-        Plus             = 0x00010009,
-        Minus            = 0x0001000a,
-        Mod              = 0x0001000b,
-        Star             = 0x0001000c,
-        Slash            = 0x0001000d,
-        OpenParenthesis  = 0x0001000e,
-        CloseParenthesis = 0x0001000f,
-        ContinueLine     = 0x00010010,
-        Comma            = 0x00010011,
-        InputFunc        = 0x00010012,
+        EndOfFile         = 0x00010000,
+        EndOfLine         = 0x00010001,
+        Unknown           = 0x00010002,
+        WhiteSpace        = 0x00010003,
+        Number            = 0x00010004,
+        String            = 0x00010005,
+        Identifier        = 0x00010006,
+        Ampersand         = 0x00010007,
+        Equals            = 0x00010008,
+        Plus              = 0x00010009,
+        Minus             = 0x0001000a,
+        Mod               = 0x0001000b,
+        Star              = 0x0001000c,
+        Slash             = 0x0001000d,
+        OpenParenthesis   = 0x0001000e,
+        CloseParenthesis  = 0x0001000f,
+        ContinueLine      = 0x00010010,
+        Comma             = 0x00010011,
+        InputFunc         = 0x00010012,
+        PrintLineMainProc = 0x00010013,
     }
     public enum SyntaxExpressionKind {
-        Literal       = 0x00020013,
-        Unary         = 0x00020014,
-        Binary        = 0x00020015,
-        Name          = 0x00020016,
-        Parenthesised = 0x00020017,
-        Function      = 0x00020018,
+        Literal       = 0x00020014,
+        Unary         = 0x00020015,
+        Binary        = 0x00020016,
+        Name          = 0x00020017,
+        Parenthesised = 0x00020018,
+        Function      = 0x00020019,
     }
     public enum SyntaxStatementKind {
-        Expression = 0x00030019,
-        Assignment = 0x0003001a,
+        Expression = 0x0003001a,
+        Assignment = 0x0003001b,
+        Procedure  = 0x0003001c,
     }
     public enum SyntaxCustomKind {
-        CompilationUnit = 0x0000001b,
+        CompilationUnit = 0x0000001d,
     }
     public enum SyntaxKind {
         EndOfFileToken          = 0x00010000,
@@ -55,15 +57,17 @@
         ContinueLineToken       = 0x00010010,
         CommaToken              = 0x00010011,
         InputFuncToken          = 0x00010012,
-        LiteralExpression       = 0x00020013,
-        UnaryExpression         = 0x00020014,
-        BinaryExpression        = 0x00020015,
-        NameExpression          = 0x00020016,
-        ParenthesisedExpression = 0x00020017,
-        FunctionExpression      = 0x00020018,
-        ExpressionStatement     = 0x00030019,
-        AssignmentStatement     = 0x0003001a,
-        CompilationUnit         = 0x0000001b,
+        PrintLineMainProcToken  = 0x00010013,
+        LiteralExpression       = 0x00020014,
+        UnaryExpression         = 0x00020015,
+        BinaryExpression        = 0x00020016,
+        NameExpression          = 0x00020017,
+        ParenthesisedExpression = 0x00020018,
+        FunctionExpression      = 0x00020019,
+        ExpressionStatement     = 0x0003001a,
+        AssignmentStatement     = 0x0003001b,
+        ProcedureStatement      = 0x0003001c,
+        CompilationUnit         = 0x0000001d,
     }
 
     public static partial class SyntaxFacts {
@@ -82,18 +86,19 @@
         public static string GetText(this SyntaxKind kind) => GetText(kind.AsToken());
         public static string GetText(this SyntaxTokenKind kind) =>
             kind switch {
-                SyntaxTokenKind.Ampersand        => "&",
-                SyntaxTokenKind.Equals           => "=",
-                SyntaxTokenKind.Plus             => "+",
-                SyntaxTokenKind.Minus            => "-",
-                SyntaxTokenKind.Mod              => "MOD",
-                SyntaxTokenKind.Star             => "*",
-                SyntaxTokenKind.Slash            => "/",
-                SyntaxTokenKind.OpenParenthesis  => "(",
-                SyntaxTokenKind.CloseParenthesis => ")",
-                SyntaxTokenKind.ContinueLine     => "_",
-                SyntaxTokenKind.Comma            => ",",
-                SyntaxTokenKind.InputFunc        => "INPUT",
+                SyntaxTokenKind.Ampersand         => "&",
+                SyntaxTokenKind.Equals            => "=",
+                SyntaxTokenKind.Plus              => "+",
+                SyntaxTokenKind.Minus             => "-",
+                SyntaxTokenKind.Mod               => "MOD",
+                SyntaxTokenKind.Star              => "*",
+                SyntaxTokenKind.Slash             => "/",
+                SyntaxTokenKind.OpenParenthesis   => "(",
+                SyntaxTokenKind.CloseParenthesis  => ")",
+                SyntaxTokenKind.ContinueLine      => "_",
+                SyntaxTokenKind.Comma             => ",",
+                SyntaxTokenKind.InputFunc         => "INPUT",
+                SyntaxTokenKind.PrintLineMainProc => "PL",
                 _ => kind.ToString() ?? string.Empty
             };
         
@@ -116,12 +121,6 @@
                 SyntaxTokenKind.Star      => 0x00000005,
                 SyntaxTokenKind.Slash     => 0x00000005,
                 _ => 0
-            };
-
-        public static int GetFuncArgumentsCount(this SyntaxTokenKind kind) =>
-            kind switch {
-                SyntaxTokenKind.InputFunc => 1,
-                _ => -1
             };
     }
 }

@@ -143,5 +143,32 @@ namespace QSP.CodeAnalysis {
                     yield return child;
             }   
         }
+        public class ProcedureStatementSyntax : StatementSyntax {
+            public ProcedureStatementSyntax(SyntaxToken keyword, SyntaxToken? openParenthesis, SeparatedListSyntax<ExpressionSyntax> arguments, SyntaxToken? closeParenthesis, SyntaxToken endToken) : base(endToken) {
+                Keyword = keyword ?? throw new ArgumentNullException(nameof(keyword)); 
+                OpenParenthesis = openParenthesis; 
+                Arguments = arguments ?? throw new ArgumentNullException(nameof(arguments)); 
+                CloseParenthesis = closeParenthesis; 
+            }
+
+            public override SyntaxStatementKind StatementKind => SyntaxStatementKind.Procedure;
+
+            public SyntaxToken Keyword { get; }
+            public SyntaxToken? OpenParenthesis { get; }
+            public SeparatedListSyntax<ExpressionSyntax> Arguments { get; }
+            public SyntaxToken? CloseParenthesis { get; }
+
+            public override IEnumerable<object> GetChildren() {
+                yield return Keyword;
+                if (OpenParenthesis != null)  
+                    yield return OpenParenthesis;
+                foreach (var item in Arguments)
+                    yield return item;
+                if (CloseParenthesis != null)  
+                    yield return CloseParenthesis;
+                foreach (var child in base.GetChildren())
+                    yield return child;
+            }   
+        }
 }
 

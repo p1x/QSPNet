@@ -30,8 +30,18 @@ namespace QSP.CodeAnalysis {
             statement switch {
                 AssignmentStatementSyntax x => BindAssignmentStatement(x),
                 ExpressionStatementSyntax x => BindExpressionStatement(x),
+                ProcedureStatementSyntax  x => BindProcedureStatement(x),
                 _ => throw new ArgumentOutOfRangeException(nameof(statement))
             };
+
+        private BoundStatement BindAssignmentStatement(AssignmentStatementSyntax statement) {
+            var variable   = BindVariable(statement.Identifier);
+            var expression = BindExpression(statement.Expression);
+            if (expression.Kind == BoundNodeKind.ErrorExpression)
+                return BoundErrorStatement.Instance;
+            
+            return new BoundAssignmentStatement(variable, expression);
+        }
 
         private BoundStatement BindExpressionStatement(ExpressionStatementSyntax statement) {
             var expression = BindExpression(statement.Expression);
@@ -40,13 +50,22 @@ namespace QSP.CodeAnalysis {
             return new BoundExpressionStatement(expression);
         }
 
-        private BoundStatement BindAssignmentStatement(AssignmentStatementSyntax statement) {
-            var variable = BindVariable(statement.Identifier);
-            var expression = BindExpression(statement.Expression);
-            if (expression.Kind == BoundNodeKind.ErrorExpression)
-                return BoundErrorStatement.Instance;
+        private BoundStatement BindProcedureStatement(ProcedureStatementSyntax statement) {
+            // TODO Add ability for arguments type checking even if arguments count not match  
             
-            return new BoundAssignmentStatement(variable, expression);
+            var procedureSymbol = ProcedureSymbol.Get(statement.Keyword.Kind);
+            if (procedureSymbol == null)
+                // Reported in parser 
+                return BoundErrorStatement.Instance;
+
+            var nodeSyntaxArray = statement.Arguments.Nodes;
+             if (procedureSymbol.ArgumentsTypes.Length != nodeSyntaxArray.Length) {
+                 _diagnostics.ReportWrongArgumentCount();
+                 return BoundErrorStatement.Instance;
+             }
+
+            var arguments = BindArguments(nodeSyntaxArray, procedureSymbol.ArgumentsTypes);
+            return new BoundProcedureStatement(procedureSymbol, arguments);
         }
 
         private BoundExpression BindExpression(ExpressionSyntax expression) =>
@@ -125,7 +144,7 @@ namespace QSP.CodeAnalysis {
             BindExpression(expression.Expression);
 
         private BoundExpression BindFuncExpression(FunctionExpressionSyntax expression) {
-            // TODO Add ability for arguments type checking even if arguments count not macth  
+            // TODO Add ability for arguments type checking even if arguments count not match  
             
             var functionSymbol = FunctionSymbol.Get(expression.Keyword.Kind);
             if (functionSymbol == null)
@@ -138,18 +157,23 @@ namespace QSP.CodeAnalysis {
                 return BoundErrorExpression.Instance;
             }
 
-            var arguments = ImmutableArray.CreateBuilder<BoundExpression>();
+            var arguments = BindArguments(nodeSyntaxArray, functionSymbol.ArgumentsTypes);
+            return new BoundFunctionExpression(functionSymbol, arguments);
+        }
+
+        private ImmutableArray<BoundExpression> BindArguments(ImmutableArray<ExpressionSyntax> nodeSyntaxArray, ImmutableArray<BoundType> argumentTypes) {
+            var argumentsBuilder = ImmutableArray.CreateBuilder<BoundExpression>();
             for (var i = 0; i < nodeSyntaxArray.Length; i++) {
                 var boundArgument = BindExpression(nodeSyntaxArray[i]);
-                if (boundArgument.Kind != BoundNodeKind.ErrorExpression && boundArgument.Type != functionSymbol.ArgumentsTypes[i]) {
+                if (boundArgument.Kind != BoundNodeKind.ErrorExpression && boundArgument.Type != argumentTypes[i]) {
                     _diagnostics.ReportInvalidArgumentType();
-                    arguments.Add(BoundErrorExpression.Instance);
+                    argumentsBuilder.Add(BoundErrorExpression.Instance);
                 } else {
-                    arguments.Add(boundArgument);
+                    argumentsBuilder.Add(boundArgument);
                 }
             }
-            
-            return new BoundFunctionExpression(functionSymbol, arguments.ToImmutable());
+
+            return argumentsBuilder.ToImmutable();
         }
 
         private static BoundType BindType(SyntaxTokenKind tokenKind) =>

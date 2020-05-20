@@ -38,6 +38,12 @@
             ("Identifier", MemberType.Token, false),
             ("Equals", MemberType.Token, false),
             ("Expression", MemberType.Expression, false),
+        }),
+        ("Procedure", new [] {
+            ("Keyword", MemberType.Token, false),
+            ("OpenParenthesis", MemberType.Token, true),
+            ("Arguments", MemberType.SeparatedExpressionList, false),
+            ("CloseParenthesis", MemberType.Token, true),
         })
     };
 #>
@@ -128,10 +134,27 @@ namespace QSP.CodeAnalysis {
 
             public override IEnumerable<object> GetChildren() {
 <#
-            foreach (var (name, _, _) in s.members) {
+            foreach (var (name, type, isOptional) in s.members) {
+                if (isOptional) {
+#>
+                if (<#= name #> != null)  
+<#
+                    PushIndent("    ");
+                }
+                
+                if (type == MemberType.SeparatedList || type == MemberType.SeparatedExpressionList) {
+#>
+                foreach (var item in <#= name #>)
+                    yield return item;
+<#                    
+                } else {
 #>
                 yield return <#= name #>;
 <#
+                }
+                
+                if (isOptional)
+                    PopIndent();
             }
 #>
                 foreach (var child in base.GetChildren())

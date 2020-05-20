@@ -42,6 +42,8 @@ namespace QSP.CodeAnalysis {
             _next = FilterNext(_lexer);
             return current;
         }
+        
+        protected SyntaxToken? TryNext(SyntaxTokenKind kind) => _current.Kind == kind ? Next() : null;
 
         protected SyntaxToken Match(SyntaxTokenKind kind) {
             if (_current.Kind == kind)

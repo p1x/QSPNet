@@ -8,5 +8,6 @@
         // TODO move to generated SyntaxFacts
         public static bool IsFunc(this SyntaxTokenKind kind) =>
             kind == SyntaxTokenKind.InputFunc;
+        public static bool FunctionHasSingleArgument(this SyntaxTokenKind kind) => kind == SyntaxTokenKind.InputFunc;
     }
 }

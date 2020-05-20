@@ -99,6 +99,7 @@ namespace QSP.CodeAnalysis {
             switch (statement) {
                 case BoundAssignmentStatement x: EmitAssignmentStatement(il, x); break;
                 case BoundExpressionStatement x: EmitExpressionStatement(il, x); break;
+                case BoundProcedureStatement  x: EmitProcedureStatement(il, x); break;
                 default: throw new ArgumentOutOfRangeException(nameof(statement));
             }
         }
@@ -121,6 +122,27 @@ namespace QSP.CodeAnalysis {
                     break;
                 default:
                     throw new ArgumentOutOfRangeException();
+            }
+        }
+
+        private void EmitProcedureStatement(ILProcessor il, BoundProcedureStatement statement) {
+            if (statement.Procedure == ProcedureSymbol.PrintLine) {
+                foreach (var argument in statement.Arguments) {
+                    EmitExpression(il, argument);
+                }
+                
+                switch (statement.Arguments[0].Type) {
+                    case BoundType.Integer:
+                        il.Emit(OpCodes.Call, GetMethodReference("System.Console", "WriteLine", new []{ "System.Int32" }));
+                        break;
+                    case BoundType.String:
+                        il.Emit(OpCodes.Call, GetMethodReference("System.Console", "WriteLine", new []{ "System.String" }));
+                        break;
+                    default:
+                        throw new ArgumentOutOfRangeException();
+                }
+            } else {
+                throw new ArgumentException($"Unknown procedure '{statement.Procedure.Name}'", nameof(statement));
             }
         }
 
@@ -288,9 +310,9 @@ namespace QSP.CodeAnalysis {
                         throw new ArgumentOutOfRangeException();
                 }
                 il.Emit(OpCodes.Call, GetMethodReference("System.Console", "ReadLine", Array.Empty<string>()));
-                //il.Emit(OpCodes.Dup);
-            } else
+            } else {
                 throw new ArgumentException($"Unknown function '{expression.Function.Name}'", nameof(expression));
+            }
         }
 
         private void EmitUnaryExpression(ILProcessor il, BoundUnaryExpression expression) {

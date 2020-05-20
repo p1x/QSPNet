@@ -33,7 +33,8 @@ namespace QSP.CodeAnalysis {
         private StatementSyntax ParseStatement() {
             if (Current.Kind == SyntaxTokenKind.Identifier && Lookahead.Kind == SyntaxTokenKind.Equals)
                 return ParseAssignmentStatement();
-
+            if (Current.Kind == SyntaxTokenKind.PrintLineMainProc)
+                return ParseProcedureStatement(SyntaxTokenKind.PrintLineMainProc);
             return ParseExpressionStatement();
         }
 
@@ -43,6 +44,21 @@ namespace QSP.CodeAnalysis {
             var expression      = ParseExpression();
             var endOfLineToken  = MatchEndOfStatement();
             return new AssignmentStatementSyntax(identifierToken, equalsToken, expression, endOfLineToken);
+        }
+
+        private StatementSyntax ParseProcedureStatement(SyntaxTokenKind kind) {
+            var keyword = Match(kind);
+
+            var openParenthesis = TryNext(SyntaxTokenKind.OpenParenthesis);
+            
+            var isParenthesised = openParenthesis != null;
+            var arguments = ParseArguments(isParenthesised, 0);
+
+            var closeParenthesis = isParenthesised ? Match(SyntaxTokenKind.CloseParenthesis) : null;
+
+            var endOfLineToken = MatchEndOfStatement();
+            
+            return new ProcedureStatementSyntax(keyword, openParenthesis, arguments, closeParenthesis, endOfLineToken);
         }
 
         private StatementSyntax ParseExpressionStatement() {
@@ -90,32 +106,40 @@ namespace QSP.CodeAnalysis {
             };
 
         private FunctionExpressionSyntax ParseFunctionExpression(SyntaxTokenKind funcKind) {
-            var argumentsCount = funcKind.GetFuncArgumentsCount();
+            var hasSingleArgument = funcKind.FunctionHasSingleArgument();
             var keyword = Match(funcKind);
+
+            // If function has single argument, it can be called without parenthesis.
+            var openParenthesis = hasSingleArgument ? TryNext(SyntaxTokenKind.OpenParenthesis) : Match(SyntaxTokenKind.OpenParenthesis);
+            var isParenthesised = openParenthesis != null;
+
+            // And if it called without parenthesis, it should be parsed with precedence between binary and unary.
+            var precedence = isParenthesised ? 0 : 1 << 16; // Just below unary precedence
+            var arguments = ParseArguments(isParenthesised, precedence);
+                
+            var closeParenthesis = isParenthesised ? Match(SyntaxTokenKind.CloseParenthesis) : null;
+
+            return new FunctionExpressionSyntax(keyword, openParenthesis, arguments, closeParenthesis);
+        }
+
+        private SeparatedListSyntax<ExpressionSyntax> ParseArguments(bool parenthesised, Precedence parentPrecedence) {
+            ImmutableArray<ExpressionSyntax> arguments;
+            ImmutableArray<SyntaxToken>      separators;
 
             var argumentsBuilder  = ImmutableArray.CreateBuilder<ExpressionSyntax>();
             var separatorsBuilder = ImmutableArray.CreateBuilder<SyntaxToken>();
-            SyntaxToken? openParenthesis = null;
-            SyntaxToken? closeParenthesis = null;
-            if (argumentsCount == 1) {
-                argumentsBuilder.Add(ParseExpression(parentPrecedence: 1 << 16));
-            } else {
-                openParenthesis = Match(SyntaxTokenKind.OpenParenthesis);
-                do {
-                    var argument = ParseExpression(true);
-                    argumentsBuilder.Add(argument);
-                    var separator = Match(SyntaxTokenKind.Comma);
-                    separatorsBuilder.Add(separator);
-                    if (Current.Kind == SyntaxTokenKind.CloseParenthesis ||
-                        Current.Kind == SyntaxTokenKind.EndOfFile ||
-                        Current.Kind == SyntaxTokenKind.EndOfLine)
-                        break;
-                } while (true);
-                closeParenthesis = Match(SyntaxTokenKind.CloseParenthesis);
-            }
+            do {
+                var argument = ParseExpression(parenthesised, parentPrecedence);
+                argumentsBuilder.Add(argument);
+                if (Current.Kind != SyntaxTokenKind.Comma)
+                    break;
+                var separator = Next();
+                separatorsBuilder.Add(separator);
+            } while (true);
 
-            var arguments = new SeparatedListSyntax<ExpressionSyntax>(argumentsBuilder.ToImmutable(), separatorsBuilder.ToImmutable());
-            return new FunctionExpressionSyntax(keyword, openParenthesis, arguments, closeParenthesis);
+            arguments  = argumentsBuilder.ToImmutable();
+            separators = separatorsBuilder.ToImmutable();
+            return new SeparatedListSyntax<ExpressionSyntax>(arguments, separators);
         }
 
         private ExpressionSyntax ParseParenthesisedExpression() {

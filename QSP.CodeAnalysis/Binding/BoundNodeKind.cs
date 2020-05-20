@@ -9,6 +9,7 @@
         UnaryExpression,
         BinaryExpression,
         VariableExpression,
-        FunctionExpression
+        FunctionExpression,
+        ProcedureStatement
     }
 }
