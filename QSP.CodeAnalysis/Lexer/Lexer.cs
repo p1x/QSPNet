@@ -61,7 +61,7 @@ namespace QSP.CodeAnalysis {
                 case '\'': case '"':
                     return ConsumeStringToken(_position);
                 default:
-                    return char.IsLetter(current) || current == '$'
+                    return Char.IsIdentifier(current) || current == '$'
                         ? ConsumeIdentifierOrKeyword(_position)
                         : ConsumeBadCharacter(_position);
             }
@@ -128,7 +128,7 @@ namespace QSP.CodeAnalysis {
         private SyntaxToken ConsumeIdentifierOrKeyword(int start) {
             do
                 _position++;
-            while (_position < _text.Length && (char.IsLetter(_text[_position]) || _text[_position] == '_'));
+            while (_position < _text.Length && Char.IsIdentifier(_text[_position]));
 
             var text = GetCurrentTokenText(start).ToUpperInvariant();
             var kind = text switch {
