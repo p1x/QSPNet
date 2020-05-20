@@ -132,9 +132,9 @@ namespace QSP.CodeAnalysis {
 
             var text = GetCurrentTokenText(start).ToUpperInvariant();
             var kind = text switch {
-                "INPUT" => SyntaxTokenKind.InputFunc,
-                "PL"    => SyntaxTokenKind.PrintLineMainProc,
-                _       => SyntaxTokenKind.Identifier
+                SyntaxFacts.InputFuncText     => SyntaxTokenKind.InputFunc,
+                SyntaxFacts.PrintLineProcText => SyntaxTokenKind.PrintLineProc,
+                _                             => SyntaxTokenKind.Identifier
             };
             
             return new SyntaxToken(kind, start, GetCurrentTokenText(start));

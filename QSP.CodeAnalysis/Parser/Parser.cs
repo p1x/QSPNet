@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Diagnostics;
 
@@ -33,8 +33,8 @@ namespace QSP.CodeAnalysis {
         private StatementSyntax ParseStatement() {
             if (Current.Kind == SyntaxTokenKind.Identifier && Lookahead.Kind == SyntaxTokenKind.Equals)
                 return ParseAssignmentStatement();
-            if (Current.Kind == SyntaxTokenKind.PrintLineMainProc)
-                return ParseProcedureStatement(SyntaxTokenKind.PrintLineMainProc);
+            if (Current.Kind == SyntaxTokenKind.PrintLineProc)
+                return ParseProcedureStatement(SyntaxTokenKind.PrintLineProc);
             return ParseExpressionStatement();
         }
 

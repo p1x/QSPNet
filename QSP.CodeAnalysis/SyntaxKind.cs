@@ -1,25 +1,25 @@
 ﻿﻿namespace QSP.CodeAnalysis {
     public enum SyntaxTokenKind {
-        EndOfFile         = 0x00010000,
-        EndOfLine         = 0x00010001,
-        Unknown           = 0x00010002,
-        WhiteSpace        = 0x00010003,
-        Number            = 0x00010004,
-        String            = 0x00010005,
-        Identifier        = 0x00010006,
-        Ampersand         = 0x00010007,
-        Equals            = 0x00010008,
-        Plus              = 0x00010009,
-        Minus             = 0x0001000a,
-        Mod               = 0x0001000b,
-        Star              = 0x0001000c,
-        Slash             = 0x0001000d,
-        OpenParenthesis   = 0x0001000e,
-        CloseParenthesis  = 0x0001000f,
-        ContinueLine      = 0x00010010,
-        Comma             = 0x00010011,
-        InputFunc         = 0x00010012,
-        PrintLineMainProc = 0x00010013,
+        EndOfFile        = 0x00010000,
+        EndOfLine        = 0x00010001,
+        Unknown          = 0x00010002,
+        WhiteSpace       = 0x00010003,
+        Number           = 0x00010004,
+        String           = 0x00010005,
+        Identifier       = 0x00010006,
+        Ampersand        = 0x00010007,
+        Equals           = 0x00010008,
+        Plus             = 0x00010009,
+        Minus            = 0x0001000a,
+        Mod              = 0x0001000b,
+        Star             = 0x0001000c,
+        Slash            = 0x0001000d,
+        OpenParenthesis  = 0x0001000e,
+        CloseParenthesis = 0x0001000f,
+        ContinueLine     = 0x00010010,
+        Comma            = 0x00010011,
+        InputFunc        = 0x00010012,
+        PrintLineProc    = 0x00010013,
     }
     public enum SyntaxExpressionKind {
         Literal       = 0x00020014,
@@ -57,7 +57,7 @@
         ContinueLineToken       = 0x00010010,
         CommaToken              = 0x00010011,
         InputFuncToken          = 0x00010012,
-        PrintLineMainProcToken  = 0x00010013,
+        PrintLineProcToken      = 0x00010013,
         LiteralExpression       = 0x00020014,
         UnaryExpression         = 0x00020015,
         BinaryExpression        = 0x00020016,
@@ -86,21 +86,25 @@
         public static string GetText(this SyntaxKind kind) => GetText(kind.AsToken());
         public static string GetText(this SyntaxTokenKind kind) =>
             kind switch {
-                SyntaxTokenKind.Ampersand         => "&",
-                SyntaxTokenKind.Equals            => "=",
-                SyntaxTokenKind.Plus              => "+",
-                SyntaxTokenKind.Minus             => "-",
-                SyntaxTokenKind.Mod               => "MOD",
-                SyntaxTokenKind.Star              => "*",
-                SyntaxTokenKind.Slash             => "/",
-                SyntaxTokenKind.OpenParenthesis   => "(",
-                SyntaxTokenKind.CloseParenthesis  => ")",
-                SyntaxTokenKind.ContinueLine      => "_",
-                SyntaxTokenKind.Comma             => ",",
-                SyntaxTokenKind.InputFunc         => "INPUT",
-                SyntaxTokenKind.PrintLineMainProc => "PL",
+                SyntaxTokenKind.Ampersand        => "&",
+                SyntaxTokenKind.Equals           => "=",
+                SyntaxTokenKind.Plus             => "+",
+                SyntaxTokenKind.Minus            => "-",
+                SyntaxTokenKind.Mod              => "MOD",
+                SyntaxTokenKind.Star             => "*",
+                SyntaxTokenKind.Slash            => "/",
+                SyntaxTokenKind.OpenParenthesis  => "(",
+                SyntaxTokenKind.CloseParenthesis => ")",
+                SyntaxTokenKind.ContinueLine     => "_",
+                SyntaxTokenKind.Comma            => ",",
+                SyntaxTokenKind.InputFunc        => "INPUT",
+                SyntaxTokenKind.PrintLineProc    => "PL",
                 _ => kind.ToString() ?? string.Empty
             };
+
+        public const string InputFuncText = @"INPUT"; 
+        public const string PrintLineProcText = @"PL"; 
+
         
         public static Precedence GetUnaryPrecedence(this SyntaxKind kind) => GetUnaryPrecedence(kind.AsToken());
         public static Precedence GetUnaryPrecedence(this SyntaxTokenKind kind) =>

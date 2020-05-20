@@ -37,16 +37,16 @@
         ("Comma",            ",")
     };
     var functions = new (string name, string text, bool mustBeParenthesised)[] {
-        ("Input", "INPUT", false)
+        ("InputFunc", "INPUT", false)
     };
     var procedures = new (string name, string text)[] {
-        ("PrintLineMain", "PL")
+        ("PrintLineProc", "PL")
     };
     var parseableTokens = Enumerable.Empty<(string name, string)>()
         .Concat(operatorTokens.Select(x => (x.name, x.text)))
         .Concat(nonOperatorTokens)
-        .Concat(functions.Select(x => (name: x.name + "Func", x.text)))
-        .Concat(procedures.Select(x => (name: x.name + "Proc", x.text)))
+        .Concat(functions.Select(x => (x.name, x.text)))
+        .Concat(procedures.Select(x => (x.name, x.text)))
         .ToList();
 
     // Not tokens
@@ -80,23 +80,16 @@
         .ToList();
 
     var indent = new string(' ', 4);
-
-    void WriteIndent1() => Write(indent);
-    void WriteIndent2() {
-        WriteIndent1();
-        WriteIndent1();
+    void writeIndent1() => Write(indent);
+    void writeIndent2() {
+        writeIndent1();
+        writeIndent1();
     }
-    void WriteIndent3() {
-        WriteIndent2();
-        WriteIndent1();
-    }
-    void WriteIndent4() {
-        WriteIndent3();
-        WriteIndent1();
-    }
-    void WriteIndent5() {
-        WriteIndent4();
-        WriteIndent1();
+    void writeIndent4() {
+        writeIndent1();
+        writeIndent1();
+        writeIndent1();
+        writeIndent1();
     }
 
     void generateEnumContent(IEnumerable<(string, SyntaxKindKind, int)> k) {
@@ -104,7 +97,7 @@
         var maxLength = tokens.Max(x => x.Item1.Length);
         tokens = tokens.Select(x => (x.Item1.PadRight(maxLength), x.Item2)).ToList();
         for (var i = 0; i < tokens.Count; i++) {
-            WriteIndent2();
+            writeIndent2();
             Write(tokens[i].Item1);
             Write(" = 0x");
             Write(tokens[i].Item2.ToString("x8"));
@@ -162,7 +155,7 @@ namespace QSP.CodeAnalysis {
 
     var maxParseableNameLength = parseableTokens.Select(x => x.name.Length).Max();
     foreach (var (name, text) in parseableTokens) {
-        WriteIndent4();
+        writeIndent4();
         Write("SyntaxTokenKind.");
         Write(name.PadRight(maxParseableNameLength));
         Write(" => \"");
@@ -172,6 +165,20 @@ namespace QSP.CodeAnalysis {
 #>
                 _ => kind.ToString() ?? string.Empty
             };
+
+<#
+    foreach (var (name, text, _) in functions) {
+#>
+        public const string <#= name #>Text = @"<#= text #>"; 
+<#
+    }
+    foreach (var (name, text) in procedures) {
+#>
+        public const string <#= name #>Text = @"<#= text #>"; 
+<#
+    }
+#>
+
         
         public static Precedence GetUnaryPrecedence(this SyntaxKind kind) => GetUnaryPrecedence(kind.AsToken());
         public static Precedence GetUnaryPrecedence(this SyntaxTokenKind kind) =>
@@ -179,7 +186,7 @@ namespace QSP.CodeAnalysis {
 <#
     var maxOperatorNameLength = operatorTokens.Max(x => x.name.Length);
     foreach (var (name, _, _, unaryPrecedence) in operatorTokens.Where(x => x.unaryPrecedence > 0)) {
-        WriteIndent4();
+        writeIndent4();
         Write("SyntaxTokenKind.");
         Write(name.PadRight(maxOperatorNameLength));
         Write(" => 0x");
@@ -195,7 +202,7 @@ namespace QSP.CodeAnalysis {
             kind switch {
 <#
     foreach (var (name, _, binaryPrecedence, _) in operatorTokens.Where(x => x.binaryPrecedence > 0)) {
-        WriteIndent4();
+        writeIndent4();
         Write("SyntaxTokenKind.");
         Write(name.PadRight(maxOperatorNameLength));
         Write(" => 0x");

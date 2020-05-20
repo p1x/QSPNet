@@ -1,4 +1,4 @@
-﻿using System.Collections.Immutable;
+using System.Collections.Immutable;
 
 namespace QSP.CodeAnalysis {
     public class ProcedureSymbol {
@@ -13,7 +13,7 @@ namespace QSP.CodeAnalysis {
 
         public static ProcedureSymbol? Get(SyntaxTokenKind functionKind) =>
             functionKind switch {
-                SyntaxTokenKind.PrintLineMainProc => PrintLine,
+                SyntaxTokenKind.PrintLineProc => PrintLine,
                 _                                 => null
             };
     }
