@@ -105,7 +105,7 @@ namespace QSP.CodeAnalysis {
         }
 
         private void EmitAssignmentStatement(ILProcessor il, BoundAssignmentStatement statement) {
-            var variableDefinition = TryEmitVariableDefinition(il, statement.Variable);
+            var variableDefinition = TryEmitVariableDefinition(il, statement.Variable.Variable);
             EmitExpression(il, statement.Expression);
             il.Emit(OpCodes.Stloc, variableDefinition);
         }

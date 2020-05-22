@@ -31,37 +31,25 @@ namespace QSP.CodeAnalysis {
         }
 
         private StatementSyntax ParseStatement() {
-            if (Current.Kind == SyntaxTokenKind.PrintLineProc)
-                return ParseProcedureStatement(SyntaxTokenKind.PrintLineProc);
-            
-            if (Current.Kind == SyntaxTokenKind.Identifier) {
-                var identifierToken = Match(SyntaxTokenKind.Identifier);
-                var arrayClause = ParseArrayClause();
-                if (Current.Kind == SyntaxTokenKind.Equals)
-                    return ParseAssignmentStatement(identifierToken, arrayClause);
-
-                var leftExpression = new NameExpressionSyntax(identifierToken, arrayClause);
-                return ParseExpressionStatement(leftExpression);
+            switch (Current.Kind) {
+                case SyntaxTokenKind.PrintLineProc:
+                    return ParseProcedureStatement(SyntaxTokenKind.PrintLineProc);
+                case SyntaxTokenKind.Identifier: {
+                    var nameExpression = ParseNameExpression();
+                    return Current.Kind == SyntaxTokenKind.Equals 
+                        ? ParseAssignmentStatement(nameExpression) 
+                        : ParseExpressionStatement(nameExpression);
+                }
+                default:
+                    return ParseExpressionStatement();
             }
-
-            return ParseExpressionStatement();
         }
 
-        private StatementSyntax ParseAssignmentStatement(SyntaxToken identifierToken, ArrayClauseSyntax? arrayClause) {
+        private StatementSyntax ParseAssignmentStatement(ExpressionSyntax nameExpression) {
             var equalsToken     = Match(SyntaxTokenKind.Equals);
             var expression      = ParseExpression();
             var endOfLineToken  = MatchEndOfStatement();
-            return new AssignmentStatementSyntax(identifierToken, arrayClause, equalsToken, expression, endOfLineToken);
-        }
-
-        private ArrayClauseSyntax? ParseArrayClause() {
-            var openBracket = TryNext(SyntaxTokenKind.OpenSquareBracket);
-            if (openBracket == null)
-                return null;
-            
-            var expression = Current.Kind != SyntaxTokenKind.CloseSquareBracket ? ParseExpression(true) : null;
-            var closeBracket = Match(SyntaxTokenKind.CloseSquareBracket);
-            return new ArrayClauseSyntax(openBracket, expression, closeBracket);
+            return new AssignmentStatementSyntax(nameExpression, equalsToken, expression, endOfLineToken);
         }
 
         private StatementSyntax ParseProcedureStatement(SyntaxTokenKind kind) {
@@ -115,8 +103,27 @@ namespace QSP.CodeAnalysis {
                 SyntaxTokenKind.Number          => new LiteralExpressionSyntax(Match(SyntaxTokenKind.Number)),
                 SyntaxTokenKind.String          => new LiteralExpressionSyntax(Match(SyntaxTokenKind.String)),
                 SyntaxTokenKind.InputFunc       => ParseFunctionExpression(SyntaxTokenKind.InputFunc),
-                _                               => new NameExpressionSyntax(Match(SyntaxTokenKind.Identifier), ParseArrayClause())
+                _                               => ParseNameExpression()
             };
+
+        private ExpressionSyntax ParseNameExpression() {
+            var identifier = Match(SyntaxTokenKind.Identifier);
+            var nameExpression = new NameExpressionSyntax(identifier);
+            if (Current.Kind == SyntaxTokenKind.OpenSquareBracket)
+                return ParseElementAccess(nameExpression);
+
+            return nameExpression;
+        }
+
+        private ExpressionSyntax ParseElementAccess(NameExpressionSyntax nameExpression) {
+            var openBracket = Match(SyntaxTokenKind.OpenSquareBracket);
+            var argument = Current.Kind != SyntaxTokenKind.CloseSquareBracket
+                ? ParseExpression(true)
+                : null;
+            var closeBracket = Match(SyntaxTokenKind.OpenSquareBracket);
+
+            return new ElementAccessExpressionSyntax(nameExpression, openBracket, argument, closeBracket);
+        }
 
         private FunctionExpressionSyntax ParseFunctionExpression(SyntaxTokenKind funcKind) {
             var hasSingleArgument = funcKind.FunctionHasSingleArgument();

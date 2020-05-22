@@ -57,20 +57,39 @@ namespace QSP.CodeAnalysis {
         }   
     }
     public class NameExpressionSyntax : ExpressionSyntax {
-        public NameExpressionSyntax(SyntaxToken identifier, ArrayClauseSyntax? arrayClause) {
+        public NameExpressionSyntax(SyntaxToken identifier) {
                 Identifier = identifier ?? throw new ArgumentNullException(nameof(identifier)); 
-                ArrayClause = arrayClause; 
         }
 
         public override SyntaxExpressionKind ExpressionKind => SyntaxExpressionKind.Name;
 
         public SyntaxToken Identifier { get; }
-        public ArrayClauseSyntax? ArrayClause { get; }
 
         public override IEnumerable<object> GetChildren() {
             yield return Identifier;
-            if (ArrayClause != null)  
-                yield return ArrayClause;
+        }   
+    }
+    public class ElementAccessExpressionSyntax : ExpressionSyntax {
+        public ElementAccessExpressionSyntax(NameExpressionSyntax name, SyntaxToken openBracket, ExpressionSyntax? argument, SyntaxToken closeBracket) {
+                Name = name ?? throw new ArgumentNullException(nameof(name)); 
+                OpenBracket = openBracket ?? throw new ArgumentNullException(nameof(openBracket)); 
+                Argument = argument; 
+                CloseBracket = closeBracket ?? throw new ArgumentNullException(nameof(closeBracket)); 
+        }
+
+        public override SyntaxExpressionKind ExpressionKind => SyntaxExpressionKind.ElementAccess;
+
+        public NameExpressionSyntax Name { get; }
+        public SyntaxToken OpenBracket { get; }
+        public ExpressionSyntax? Argument { get; }
+        public SyntaxToken CloseBracket { get; }
+
+        public override IEnumerable<object> GetChildren() {
+            yield return Name;
+            yield return OpenBracket;
+            if (Argument != null)  
+                yield return Argument;
+            yield return CloseBracket;
         }   
     }
     public class LiteralExpressionSyntax : ExpressionSyntax {
@@ -125,24 +144,20 @@ namespace QSP.CodeAnalysis {
         }   
     }
     public class AssignmentStatementSyntax : StatementSyntax {
-        public AssignmentStatementSyntax(SyntaxToken identifier, ArrayClauseSyntax? arrayClause, SyntaxToken equals, ExpressionSyntax expression, SyntaxToken endToken) : base(endToken)  {
-                Identifier = identifier ?? throw new ArgumentNullException(nameof(identifier)); 
-                ArrayClause = arrayClause; 
+        public AssignmentStatementSyntax(ExpressionSyntax variable, SyntaxToken equals, ExpressionSyntax expression, SyntaxToken endToken) : base(endToken)  {
+                Variable = variable ?? throw new ArgumentNullException(nameof(variable)); 
                 Equals = equals ?? throw new ArgumentNullException(nameof(equals)); 
                 Expression = expression ?? throw new ArgumentNullException(nameof(expression)); 
         }
 
         public override SyntaxStatementKind StatementKind => SyntaxStatementKind.Assignment;
 
-        public SyntaxToken Identifier { get; }
-        public ArrayClauseSyntax? ArrayClause { get; }
+        public ExpressionSyntax Variable { get; }
         public SyntaxToken Equals { get; }
         public ExpressionSyntax Expression { get; }
 
         public override IEnumerable<object> GetChildren() {
-            yield return Identifier;
-            if (ArrayClause != null)  
-                yield return ArrayClause;
+            yield return Variable;
             yield return Equals;
             yield return Expression;
         }   
@@ -174,26 +189,6 @@ namespace QSP.CodeAnalysis {
                 yield return item;
             if (CloseParenthesis != null)  
                 yield return CloseParenthesis;
-        }   
-    }
-    public class ArrayClauseSyntax : SyntaxNode {
-        public ArrayClauseSyntax(SyntaxToken openBrace, ExpressionSyntax? expression, SyntaxToken closeBrace) {
-                OpenBrace = openBrace ?? throw new ArgumentNullException(nameof(openBrace)); 
-                Expression = expression; 
-                CloseBrace = closeBrace ?? throw new ArgumentNullException(nameof(closeBrace)); 
-        }
-
-        public override SyntaxKind Kind => SyntaxKind.ArrayClause;
-
-        public SyntaxToken OpenBrace { get; }
-        public ExpressionSyntax? Expression { get; }
-        public SyntaxToken CloseBrace { get; }
-
-        public override IEnumerable<object> GetChildren() {
-            yield return OpenBrace;
-            if (Expression != null)  
-                yield return Expression;
-            yield return CloseBrace;
         }   
     }
 }

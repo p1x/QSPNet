@@ -26,7 +26,12 @@
         }),
         ("Name", new[] {
             ("Identifier", Token, false),
-            ("ArrayClause", "ArrayClauseSyntax", true),
+        }),
+        ("ElementAccess", new[] {
+            ("Name", "NameExpressionSyntax", false),
+            ("OpenBracket", Token, false),
+            ("Argument", Expression, true),
+            ("CloseBracket", Token, false)
         }),
         ("Literal", new[] {
             ("Token", Token, false),
@@ -43,8 +48,7 @@
             ("Expression", Expression, false),
         }),
         ("Assignment", new[] {
-            ("Identifier", Token, false),
-            ("ArrayClause", "ArrayClauseSyntax", true),
+            ("Variable", Expression, false),
             ("Equals", Token, false),
             ("Expression", Expression, false),
         }),
@@ -54,13 +58,6 @@
             ("OpenParenthesis", Token, true),
             ("Arguments", SeparatedExpressionList, false),
             ("CloseParenthesis", Token, true),
-        })
-    };
-    var custom = new (string name, (string name, string type, bool isOptional)[] members)[] {
-        ("ArrayClause", new[] {
-            ("OpenBrace", Token, false),
-            ("Expression", Expression, true),
-            ("CloseBrace", Token, false),
         })
     };
 #>
@@ -138,7 +135,6 @@ namespace QSP.CodeAnalysis {
     writeNodes(statements, "Statement", "StatementSyntax", new [] {
         ("EndToken", Token, false)
     });
-    writeNodes(custom, "", "SyntaxNode", null);
 #>
 }
 

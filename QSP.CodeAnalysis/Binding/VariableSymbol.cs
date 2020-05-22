@@ -16,5 +16,6 @@ namespace QSP.CodeAnalysis {
         
         public string Name { get; }
         public BoundType Type { get; }
+        public VariableKind Kind { get; set; }
     }
 }

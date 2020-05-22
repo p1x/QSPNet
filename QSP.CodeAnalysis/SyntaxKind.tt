@@ -56,8 +56,9 @@
         "Unary",
         "Binary",
         "Name",
+        "ElementAccess",
         "Parenthesised",
-        "Function"
+        "Function",
     };
 
     var statements = new[] {
@@ -68,7 +69,6 @@
 
     var custom = new[] {
         "CompilationUnit",
-        "ArrayClause"
     };
 
     List<(string name, SyntaxKindKind kind, int id)> kinds = Enumerable.Empty<(string, SyntaxKindKind)>()

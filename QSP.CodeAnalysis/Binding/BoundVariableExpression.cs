@@ -4,6 +4,10 @@
             Variable = variable;
         }
         
+        protected BoundVariableExpression(VariableSymbol variable, BoundNodeKind kind) : base(kind) {
+            Variable = variable;
+        }
+        
         public VariableSymbol Variable { get; }
 
         public override BoundType Type => Variable.Type;

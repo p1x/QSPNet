@@ -28,17 +28,17 @@
         Unary         = 0x00020017,
         Binary        = 0x00020018,
         Name          = 0x00020019,
-        Parenthesised = 0x0002001a,
-        Function      = 0x0002001b,
+        ElementAccess = 0x0002001a,
+        Parenthesised = 0x0002001b,
+        Function      = 0x0002001c,
     }
     public enum SyntaxStatementKind {
-        Expression = 0x0003001c,
-        Assignment = 0x0003001d,
-        Procedure  = 0x0003001e,
+        Expression = 0x0003001d,
+        Assignment = 0x0003001e,
+        Procedure  = 0x0003001f,
     }
     public enum SyntaxCustomKind {
-        CompilationUnit = 0x0000001f,
-        ArrayClause     = 0x00000020,
+        CompilationUnit = 0x00000020,
     }
     public enum SyntaxKind {
         EndOfFileToken          = 0x00010000,
@@ -67,13 +67,13 @@
         UnaryExpression         = 0x00020017,
         BinaryExpression        = 0x00020018,
         NameExpression          = 0x00020019,
-        ParenthesisedExpression = 0x0002001a,
-        FunctionExpression      = 0x0002001b,
-        ExpressionStatement     = 0x0003001c,
-        AssignmentStatement     = 0x0003001d,
-        ProcedureStatement      = 0x0003001e,
-        CompilationUnit         = 0x0000001f,
-        ArrayClause             = 0x00000020,
+        ElementAccessExpression = 0x0002001a,
+        ParenthesisedExpression = 0x0002001b,
+        FunctionExpression      = 0x0002001c,
+        ExpressionStatement     = 0x0003001d,
+        AssignmentStatement     = 0x0003001e,
+        ProcedureStatement      = 0x0003001f,
+        CompilationUnit         = 0x00000020,
     }
 
     public static partial class SyntaxFacts {

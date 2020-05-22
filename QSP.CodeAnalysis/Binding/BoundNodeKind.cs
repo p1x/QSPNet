@@ -10,6 +10,7 @@
         BinaryExpression,
         VariableExpression,
         FunctionExpression,
-        ProcedureStatement
+        ProcedureStatement,
+        ElementAccessExpression
     }
 }
