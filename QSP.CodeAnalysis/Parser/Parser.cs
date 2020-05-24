@@ -33,7 +33,8 @@ namespace QSP.CodeAnalysis {
         private StatementSyntax ParseStatement() {
             if (Current.Kind == SyntaxTokenKind.Identifier && Lookahead.Kind == SyntaxTokenKind.Equals)
                 return ParseAssignmentStatement();
-            if (Current.Kind == SyntaxTokenKind.PrintLineProc)
+            if (Current.Kind == SyntaxTokenKind.PrintLineProc || 
+                Current.Kind == SyntaxTokenKind.Star && Lookahead.Kind == SyntaxTokenKind.PrintLineProc)
                 return ParseProcedureStatement(SyntaxTokenKind.PrintLineProc);
             return ParseExpressionStatement();
         }
