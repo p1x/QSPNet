@@ -78,8 +78,30 @@ namespace QSP.CodeAnalysis {
                 BoundBinaryOperatorKind.Division                     => (int)left / (int)right,
                 BoundBinaryOperatorKind.Modulus                      => (int)left % (int)right,
                 BoundBinaryOperatorKind.Concatenation                => string.Concat(left, right),
+                BoundBinaryOperatorKind.DynamicAddition              => EvaluateDynamicAddition(left, right),
                 _ => string.Empty
             };
+        }
+
+        private static object EvaluateDynamicAddition(object left, object right) {
+            static bool tryConvert(object o, out int result) {
+                switch (o) {
+                    case int i:
+                        result = i;
+                        return true;
+                    case string s when int.TryParse(s, out var i):
+                        result = i;
+                        return true;
+                    default:
+                        result = default;
+                        return false;
+                }
+            }
+            
+            if (tryConvert(left, out var li) && tryConvert(right, out var ri))
+                return ri + li;
+            
+            return string.Concat(left.ToString(), right.ToString());
         }
 
         private object EvaluateVariableExpression(BoundVariableExpression n) {

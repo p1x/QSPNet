@@ -6,6 +6,7 @@
         Multiplication,
         Division,
         Modulus,
-        Concatenation
+        Concatenation,
+        DynamicAddition
     }
 }

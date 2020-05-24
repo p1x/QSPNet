@@ -20,8 +20,11 @@
         private static readonly BoundBinaryOperator Multiplication = new BoundBinaryOperator(BoundBinaryOperatorKind.Multiplication, BoundType.Integer);
         private static readonly BoundBinaryOperator Division = new BoundBinaryOperator(BoundBinaryOperatorKind.Division, BoundType.Integer);
         private static readonly BoundBinaryOperator Modulus = new BoundBinaryOperator(BoundBinaryOperatorKind.Modulus, BoundType.Integer);
+        
         private static readonly BoundBinaryOperator Concatenation = new BoundBinaryOperator(BoundBinaryOperatorKind.Concatenation, BoundType.String);
-
+        private static readonly BoundBinaryOperator DynamicAddition1 = new BoundBinaryOperator(BoundBinaryOperatorKind.DynamicAddition, BoundType.Integer, BoundType.String, BoundType.Dynamic);
+        private static readonly BoundBinaryOperator DynamicAddition2 = new BoundBinaryOperator(BoundBinaryOperatorKind.DynamicAddition, BoundType.String, BoundType.Integer, BoundType.Dynamic);
+        
         public static BoundBinaryOperator Bind(SyntaxTokenKind operatorKind, BoundType leftType, BoundType rightType) =>
             operatorKind switch {
                 SyntaxTokenKind.Plus       when leftType == BoundType.Integer && rightType == BoundType.Integer => Addition,
@@ -29,13 +32,17 @@
                 SyntaxTokenKind.Star       when leftType == BoundType.Integer && rightType == BoundType.Integer => Multiplication,
                 SyntaxTokenKind.Slash      when leftType == BoundType.Integer && rightType == BoundType.Integer => Division,
                 SyntaxTokenKind.Mod        when leftType == BoundType.Integer && rightType == BoundType.Integer => Modulus,
+                
                 SyntaxTokenKind.Plus       when leftType == BoundType.String  && rightType == BoundType.String  => Concatenation,
-                SyntaxTokenKind.Plus       when leftType == BoundType.Integer && rightType == BoundType.String  => Concatenation,
-                SyntaxTokenKind.Plus       when leftType == BoundType.String  && rightType == BoundType.Integer => Concatenation,
+                
                 SyntaxTokenKind.Ampersand  when leftType == BoundType.String  && rightType == BoundType.String  => Concatenation,
                 SyntaxTokenKind.Ampersand  when leftType == BoundType.Integer && rightType == BoundType.String  => Concatenation,
                 SyntaxTokenKind.Ampersand  when leftType == BoundType.String  && rightType == BoundType.Integer => Concatenation,
                 SyntaxTokenKind.Ampersand  when leftType == BoundType.Integer && rightType == BoundType.Integer => Concatenation,
+                
+                SyntaxTokenKind.Plus       when leftType == BoundType.Integer && rightType == BoundType.String  => DynamicAddition1,
+                SyntaxTokenKind.Plus       when leftType == BoundType.String  && rightType == BoundType.Integer => DynamicAddition2,
+                
                 _ => Undefined
             };
     }

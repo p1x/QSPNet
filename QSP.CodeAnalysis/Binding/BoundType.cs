@@ -2,6 +2,7 @@
     public enum BoundType {
         Undefined,
         Integer,
-        String
+        String,
+        Dynamic
     }
 }
