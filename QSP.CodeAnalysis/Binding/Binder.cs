@@ -70,7 +70,7 @@ namespace QSP.CodeAnalysis {
             }
 
             var arguments = BindArguments(nodeSyntaxArray, procedureSymbol.ArgumentsTypes);
-            return new BoundProcedureStatement(procedureSymbol, arguments);
+            return new BoundProcedureStatement(procedureSymbol, statement.Modifier?.Kind == SyntaxTokenKind.Star, arguments);
         }
 
         private BoundExpression BindExpression(ExpressionSyntax expression) =>

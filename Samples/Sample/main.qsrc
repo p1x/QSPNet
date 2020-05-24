@@ -1,5 +1,6 @@
 ﻿'Welcome!'
 *pl 'Hello ' + input input ('Enter ' + 'welcome message:') + '!'
+pl 'Some additional test output.'
 
 a = 1 + 2
 b = 10
