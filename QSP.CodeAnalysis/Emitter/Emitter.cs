@@ -115,16 +115,8 @@ namespace QSP.CodeAnalysis {
         private void EmitExpressionStatement(ILProcessor il, BoundExpressionStatement statement) {
             EmitExpression(il, statement.Expression);
 
-            switch (statement.Expression.Type) {
-                case BoundType.Integer:
-                    il.Emit(OpCodes.Call, GetMethodReference(QSPGlobalName, "PrintLineMain", new []{ "System.Int32" }));
-                    break;
-                case BoundType.String:
-                    il.Emit(OpCodes.Call, GetMethodReference(QSPGlobalName, "PrintLineMain", new []{ "System.String" }));
-                    break;
-                default:
-                    throw new ArgumentOutOfRangeException();
-            }
+            var clrTypeName = statement.Expression.Type.ClrType.FullName;
+            il.Emit(OpCodes.Call, GetMethodReference(QSPGlobalName, "PrintLineMain", new []{ clrTypeName }));
         }
 
         private void EmitProcedureStatement(ILProcessor il, BoundProcedureStatement statement) {
@@ -133,16 +125,11 @@ namespace QSP.CodeAnalysis {
                     EmitExpression(il, argument);
 
                 var methodName = statement.WithModifier ? "PrintLineMain" : "PrintLine";
-                switch (statement.Arguments[0].Type) {
-                    case BoundType.Integer:
-                        il.Emit(OpCodes.Call, GetMethodReference(QSPGlobalName, methodName, new []{ "System.Int32" }));
-                        break;
-                    case BoundType.String:
-                        il.Emit(OpCodes.Call, GetMethodReference(QSPGlobalName, methodName, new []{ "System.String" }));
-                        break;
-                    default:
-                        throw new ArgumentOutOfRangeException();
-                }
+                var argumentTypeNames = statement.Arguments.Select(x => x.Type.ClrType.FullName).ToArray();
+
+                il.Emit(OpCodes.Call, GetMethodReference(QSPGlobalName, methodName, argumentTypeNames));
+
+
             } else {
                 throw new ArgumentException($"Unknown procedure '{statement.Procedure.Name}'", nameof(statement));
             }
@@ -191,12 +178,12 @@ namespace QSP.CodeAnalysis {
         
         private readonly Dictionary<MethodSignature, MethodReference> _methods = new Dictionary<MethodSignature, MethodReference>();
         
-        private MethodReference GetMethodReference(string typeName, string methodName, string[] parameterTypeNames) {
-            var key = new MethodSignature(typeName, methodName, parameterTypeNames);
+        private MethodReference GetMethodReference(string typeName, string methodName, string[] argumentTypeNames) {
+            var key = new MethodSignature(typeName, methodName, argumentTypeNames);
             if (_methods.TryGetValue(key, out var methodReference))
                 return methodReference;
 
-            methodReference = ImportMethodReference(typeName, methodName, parameterTypeNames);
+            methodReference = ImportMethodReference(typeName, methodName, argumentTypeNames);
             _methods.Add(key, methodReference);
             return methodReference;
         }
@@ -250,29 +237,24 @@ namespace QSP.CodeAnalysis {
         
         private void EmitExpression(ILProcessor il, BoundExpression expression) {
             switch (expression) {
-                case BoundLiteralExpression  x: EmitLiteralExpression(il, x); break;
-                case BoundVariableExpression x: EmitVariableExpression(il, x); break;
-                case BoundUnaryExpression    x: EmitUnaryExpression(il, x); break;
-                case BoundBinaryExpression   x: EmitBinaryExpression(il, x); break;
-                case BoundFunctionExpression x: EmitFunctionExpression(il, x); break;
+                case BoundLiteralExpression    x: EmitLiteralExpression(il, x); break;
+                case BoundVariableExpression   x: EmitVariableExpression(il, x); break;
+                case BoundUnaryExpression      x: EmitUnaryExpression(il, x); break;
+                case BoundBinaryExpression     x: EmitBinaryExpression(il, x); break;
+                case BoundFunctionExpression   x: EmitFunctionExpression(il, x); break;
+                case BoundConversionExpression x: EmitConversionExpression(il, x); break;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(expression));
             }
         }
 
         private static void EmitLiteralExpression(ILProcessor il, BoundLiteralExpression expression) {
-            switch (expression.Type) {
-                case BoundType.Integer: {
-                    il.Emit(OpCodes.Ldc_I4, (int)expression.Value);
-                    break;
-                }
-                case BoundType.String: {
-                    il.Emit(OpCodes.Ldstr, (string)expression.Value);
-                    break;
-                }
-                default:
-                    throw new ArgumentOutOfRangeException();
-            }
+            if (expression.Type.ClrType == typeof(int))
+                il.Emit(OpCodes.Ldc_I4, (int)expression.Value);
+            else if (expression.Type.ClrType == typeof(string))
+                il.Emit(OpCodes.Ldstr, (string)expression.Value);
+            else
+                throw new ArgumentOutOfRangeException();
         }
 
         private void EmitVariableExpression(ILProcessor il, BoundVariableExpression expression) {
@@ -300,17 +282,8 @@ namespace QSP.CodeAnalysis {
                 foreach (var argument in expression.Arguments) {
                     EmitExpression(il, argument);
                 }
-                
-                switch (expression.Arguments[0].Type) {
-                    case BoundType.Integer:
-                        il.Emit(OpCodes.Call, GetMethodReference(QSPGlobalName, "Input", new []{ "System.Int32" }));
-                        break;
-                    case BoundType.String:
-                        il.Emit(OpCodes.Call, GetMethodReference(QSPGlobalName, "Input", new []{ "System.String" }));
-                        break;
-                    default:
-                        throw new ArgumentOutOfRangeException();
-                }
+                var argumentTypeNames = expression.Arguments.Select(x => x.Type.ClrType.FullName).ToArray();
+                il.Emit(OpCodes.Call, GetMethodReference(QSPGlobalName, "Input", argumentTypeNames));
             } else {
                 throw new ArgumentException($"Unknown function '{expression.Function.Name}'", nameof(expression));
             }
@@ -334,7 +307,6 @@ namespace QSP.CodeAnalysis {
         private void EmitBinaryExpression(ILProcessor il, BoundBinaryExpression expression) {
             EmitExpression(il, expression.Left);
             EmitExpression(il, expression.Right);
-
             switch (expression.Operator.Kind) {
                 case BoundBinaryOperatorKind.Addition:
                     il.Emit(OpCodes.Add);
@@ -354,16 +326,41 @@ namespace QSP.CodeAnalysis {
                 case BoundBinaryOperatorKind.Concatenation:
                     il.Emit(OpCodes.Call, GetMethodReference("System.String", "Concat", new []{ "System.String", "System.String" }));
                     break;
+                case BoundBinaryOperatorKind.DynamicAddition:
+                    il.Emit(OpCodes.Call,
+                        GetMethodReference(QSPGlobalName,
+                            "DynamicAdd",
+                            new[] {
+                                expression.Left.Type.ClrType.FullName,
+                                expression.Right.Type.ClrType.FullName,
+                            }));
+                    break;
                 default:
                     throw new ArgumentOutOfRangeException();
             }
         }
-        
-        private TypeReference GetTypeReference(BoundType boundType) =>
-            boundType switch {
-                BoundType.Integer => _assembly.MainModule.TypeSystem.Int32,
-                BoundType.String => _assembly.MainModule.TypeSystem.String,
-                _ => throw new ArgumentOutOfRangeException(nameof(boundType), boundType, null)
-            };
+
+        private void EmitConversionExpression(ILProcessor il, BoundConversionExpression expression) {
+            EmitExpression(il, expression.Expression);
+
+            var targetType = expression.Type;
+            var sourceType = expression.Expression.Type;
+
+            if (targetType == sourceType)
+                return;
+
+            if (targetType.ClrType == typeof(int))
+                il.Emit(OpCodes.Call, GetMethodReference("System.Convert", "ToInt32", new[] { sourceType.ClrType.FullName }));
+            else if (targetType.ClrType == typeof(string))
+                il.Emit(OpCodes.Call, GetMethodReference("System.Convert", "ToInt32", new[] { sourceType.ClrType.FullName }));
+        }
+
+        private TypeReference GetTypeReference(BoundType boundType) {
+            if (boundType.ClrType == typeof(int))
+                return _assembly.MainModule.TypeSystem.Int32;
+            if (boundType.ClrType == typeof(string))
+                return _assembly.MainModule.TypeSystem.String;
+            throw new ArgumentOutOfRangeException(nameof(boundType), boundType, null);
+        }
     }
 }

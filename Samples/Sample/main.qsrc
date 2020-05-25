@@ -1,11 +1,11 @@
-﻿'Welcome!'
+﻿'Welcome!' + 1
 *pl 'Hello ' + input input ('Enter ' + 'welcome message:') + '!'
 pl 'Some additional test output.'
 
-a = 1 + 2
-b = 10
-   
-c = a * (b + 1)
-c
+*pl "('1' + 2) + ('10' + 20) = "
+('1' + 2) + ('10' + 20)
+
+*pl "(input 'first' + 2) + (input 'second' + 20)"
+(input 'first' + 2) + (input 'second' + 20)
   
   

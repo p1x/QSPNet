@@ -17,7 +17,7 @@ namespace QSP.CodeAnalysis {
         public static ProcedureSymbol? Get(SyntaxTokenKind functionKind) =>
             functionKind switch {
                 SyntaxTokenKind.PrintLineProc => PrintLine,
-                _                                 => null
+                _                             => null
             };
     }
 }

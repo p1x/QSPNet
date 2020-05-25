@@ -3,6 +3,7 @@
         ErrorStatement,
         ExpressionStatement,
         AssignmentStatement,
+        ProcedureStatement,
 
         ErrorExpression,
         LiteralExpression,
@@ -10,6 +11,6 @@
         BinaryExpression,
         VariableExpression,
         FunctionExpression,
-        ProcedureStatement
+        ConversionExpression,
     }
 }

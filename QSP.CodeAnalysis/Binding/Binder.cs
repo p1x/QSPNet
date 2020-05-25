@@ -112,7 +112,7 @@ namespace QSP.CodeAnalysis {
             if (_variableSymbols.TryGetValue(name, out var symbol))
                 return symbol;
 
-            var type = name.StartsWith('$') ? BoundType.String : BoundType.Integer;
+            var type = name.StartsWith('$') ? BoundType.String : BoundType.Number;
             return _variableSymbols[name] = new VariableSymbol(name, type);
         }
         
@@ -141,6 +141,12 @@ namespace QSP.CodeAnalysis {
                 _diagnostics.ReportUndefinedBinaryOperator();
                 return BoundErrorExpression.Instance;
             }
+
+            if (@operator.LeftType != BoundType.Any && left.Type != @operator.LeftType)
+                left = new BoundConversionExpression(left, @operator.LeftType);
+
+            if (@operator.RightType != BoundType.Any && right.Type != @operator.RightType)
+                right = new BoundConversionExpression(right, @operator.RightType);
             
             return new BoundBinaryExpression(left, @operator, right);
         }
@@ -181,11 +187,11 @@ namespace QSP.CodeAnalysis {
             return argumentsBuilder.ToImmutable();
         }
 
-        private static BoundType BindType(SyntaxTokenKind tokenKind) =>
-            tokenKind switch {
-                SyntaxTokenKind.Number => BoundType.Integer,
+        private static BoundType BindType(SyntaxTokenKind kind) =>
+            kind switch {
+                SyntaxTokenKind.Number => BoundType.Number,
                 SyntaxTokenKind.String => BoundType.String,
-                _                      => BoundType.Undefined
+                _                      => throw new ArgumentException("Argument is not a literal kind.", nameof(kind))
             };
     }
 }

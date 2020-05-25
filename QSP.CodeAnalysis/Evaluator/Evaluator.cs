@@ -105,7 +105,7 @@ namespace QSP.CodeAnalysis {
         }
 
         private object EvaluateVariableExpression(BoundVariableExpression n) {
-            return _variables[n.Variable] ?? (n.Variable.Type == BoundType.Integer ? (object)0 : "");
+            return _variables[n.Variable] ?? (n.Variable.Type == BoundType.Number ? (object)0 : "");
         }
 
         private string EvaluateInput(object message) {

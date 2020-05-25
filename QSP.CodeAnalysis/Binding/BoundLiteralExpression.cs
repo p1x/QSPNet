@@ -3,7 +3,7 @@
 namespace QSP.CodeAnalysis {
     public class BoundLiteralExpression : BoundExpression {
         public BoundLiteralExpression(BoundType type, object value) : base(BoundNodeKind.LiteralExpression) {
-            if (type == BoundType.Integer && !(value is int) ||
+            if (type == BoundType.Number && !(value is int) ||
                 type == BoundType.String && !(value is string))
                 throw new ArgumentException();
             

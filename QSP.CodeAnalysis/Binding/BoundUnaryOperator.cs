@@ -12,8 +12,8 @@
         
         public BoundType ResultType { get; }
 
-        private static readonly BoundUnaryOperator Negation  = new BoundUnaryOperator(BoundUnaryOperatorKind.Negation,  BoundType.Integer,   BoundType.Integer);
-        private static readonly BoundUnaryOperator Identity  = new BoundUnaryOperator(BoundUnaryOperatorKind.Identity,  BoundType.Integer,   BoundType.Integer);
+        private static readonly BoundUnaryOperator Negation  = new BoundUnaryOperator(BoundUnaryOperatorKind.Negation,  BoundType.Number,   BoundType.Number);
+        private static readonly BoundUnaryOperator Identity  = new BoundUnaryOperator(BoundUnaryOperatorKind.Identity,  BoundType.Number,   BoundType.Number);
         private static readonly BoundUnaryOperator Undefined = new BoundUnaryOperator(BoundUnaryOperatorKind.Undefined, BoundType.Undefined, BoundType.Undefined);
         
         public static BoundUnaryOperator Bind(SyntaxTokenKind operatorKind, BoundType operandType) =>
