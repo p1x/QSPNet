@@ -50,7 +50,7 @@ namespace QSP.CodeAnalysis {
 
             if (variable is BoundVariableExpression v)
                 return new BoundAssignmentStatement(v, expression);
-            
+
             throw new InvalidOperationException();
         }
 
@@ -124,24 +124,28 @@ namespace QSP.CodeAnalysis {
                 ? BindExpression(expression.Argument)
                 : null;
 
-            var kind = VariableKind.None;
-            if (argument?.Type == BoundType.Integer)
+            VariableKind kind;
+            if (argument == null)
+                kind = VariableKind.Array; // list like addition to end or access to last element 
+            else if (argument.Type is BoundType.Integer)
                 kind = VariableKind.Array;
-            else if (argument?.Type == BoundType.String)
+            else if (argument.Type is BoundType.String)
                 kind = VariableKind.Dictionary;
-            
+            else
+                return BoundErrorExpression.Instance;
+
             var variable = BindVariable(expression.Name.Identifier, kind);
             
             return new BoundElementAccessExpression(variable, argument);
         }
 
-        private VariableSymbol BindVariable(SyntaxToken identifierToken, VariableKind kind = VariableKind.None) {
+        private VariableSymbol BindVariable(SyntaxToken identifierToken, VariableKind kind = VariableKind.Simple) {
             if (identifierToken.Kind != SyntaxTokenKind.Identifier)
                 throw new ArgumentException("identifierToken.Kind != SyntaxTokenKind.Identifier", nameof(identifierToken));
 
             var name = identifierToken.Text.ToUpperInvariant();
             if (_variableSymbols.TryGetValue(name, out var symbol)) {
-                symbol.Kind |= kind;
+                symbol.Kind |= kind; // modify variable kind based on access
                 return symbol;
             }
 
