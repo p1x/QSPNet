@@ -31,18 +31,18 @@ namespace QSP.CodeAnalysis {
         }
 
         private StatementSyntax ParseStatement() {
-            switch (Current.Kind) {
-                case SyntaxTokenKind.PrintLineProc:
-                    return ParseProcedureStatement(SyntaxTokenKind.PrintLineProc);
-                case SyntaxTokenKind.Identifier: {
-                    var nameExpression = ParseNameExpression();
-                    return Current.Kind == SyntaxTokenKind.Equals 
-                        ? ParseAssignmentStatement(nameExpression) 
-                        : ParseExpressionStatement(nameExpression);
-                }
-                default:
-                    return ParseExpressionStatement();
+            if (Current.Kind == SyntaxTokenKind.Identifier) {
+                var nameExpression = ParseNameExpression();
+                return Current.Kind == SyntaxTokenKind.Equals
+                    ? ParseAssignmentStatement(nameExpression)
+                    : ParseExpressionStatement(nameExpression);
             }
+
+            if (Current.Kind == SyntaxTokenKind.PrintLineProc || 
+                Current.Kind == SyntaxTokenKind.Star && Lookahead.Kind == SyntaxTokenKind.PrintLineProc)
+                return ParseProcedureStatement(SyntaxTokenKind.PrintLineProc);
+
+            return ParseExpressionStatement();
         }
 
         private StatementSyntax ParseAssignmentStatement(ExpressionSyntax nameExpression) {

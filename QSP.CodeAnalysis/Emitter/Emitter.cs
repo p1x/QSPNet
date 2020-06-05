@@ -8,8 +8,10 @@ using Mono.Cecil.Cil;
 namespace QSP.CodeAnalysis {
     public class Emitter {
         private const string RuntimeAssemblyName = "System.Runtime";
+        private const string QSPAssemblyName = "QSP.Runtime";
         private const string ProgramClassName = "Program";
         private const string CtorMethodName = ".ctor";
+        private const string QSPGlobalName = "QSP.Runtime.Global";
 
         private readonly AssemblyDefinition _assembly;
         private readonly IReadOnlyList<AssemblyDefinition> _referenceAssemblies;
@@ -115,10 +117,10 @@ namespace QSP.CodeAnalysis {
 
             switch (statement.Expression.Type) {
                 case BoundType.Integer:
-                    il.Emit(OpCodes.Call, GetMethodReference("System.Console", "WriteLine", new []{ "System.Int32" }));
+                    il.Emit(OpCodes.Call, GetMethodReference(QSPGlobalName, "PrintLineMain", new []{ "System.Int32" }));
                     break;
                 case BoundType.String:
-                    il.Emit(OpCodes.Call, GetMethodReference("System.Console", "WriteLine", new []{ "System.String" }));
+                    il.Emit(OpCodes.Call, GetMethodReference(QSPGlobalName, "PrintLineMain", new []{ "System.String" }));
                     break;
                 default:
                     throw new ArgumentOutOfRangeException();
@@ -127,16 +129,16 @@ namespace QSP.CodeAnalysis {
 
         private void EmitProcedureStatement(ILProcessor il, BoundProcedureStatement statement) {
             if (statement.Procedure == ProcedureSymbol.PrintLine) {
-                foreach (var argument in statement.Arguments) {
+                foreach (var argument in statement.Arguments)
                     EmitExpression(il, argument);
-                }
-                
+
+                var methodName = statement.WithModifier ? "PrintLineMain" : "PrintLine";
                 switch (statement.Arguments[0].Type) {
                     case BoundType.Integer:
-                        il.Emit(OpCodes.Call, GetMethodReference("System.Console", "WriteLine", new []{ "System.Int32" }));
+                        il.Emit(OpCodes.Call, GetMethodReference(QSPGlobalName, methodName, new []{ "System.Int32" }));
                         break;
                     case BoundType.String:
-                        il.Emit(OpCodes.Call, GetMethodReference("System.Console", "WriteLine", new []{ "System.String" }));
+                        il.Emit(OpCodes.Call, GetMethodReference(QSPGlobalName, methodName, new []{ "System.String" }));
                         break;
                     default:
                         throw new ArgumentOutOfRangeException();
@@ -301,15 +303,14 @@ namespace QSP.CodeAnalysis {
                 
                 switch (expression.Arguments[0].Type) {
                     case BoundType.Integer:
-                        il.Emit(OpCodes.Call, GetMethodReference("System.Console", "WriteLine", new []{ "System.Int32" }));
+                        il.Emit(OpCodes.Call, GetMethodReference(QSPGlobalName, "Input", new []{ "System.Int32" }));
                         break;
                     case BoundType.String:
-                        il.Emit(OpCodes.Call, GetMethodReference("System.Console", "WriteLine", new []{ "System.String" }));
+                        il.Emit(OpCodes.Call, GetMethodReference(QSPGlobalName, "Input", new []{ "System.String" }));
                         break;
                     default:
                         throw new ArgumentOutOfRangeException();
                 }
-                il.Emit(OpCodes.Call, GetMethodReference("System.Console", "ReadLine", Array.Empty<string>()));
             } else {
                 throw new ArgumentException($"Unknown function '{expression.Function.Name}'", nameof(expression));
             }
