@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
@@ -113,18 +113,18 @@ namespace QSP.CodeAnalysis {
         }
 
         private void EmitExpressionStatement(ILProcessor il, BoundExpressionStatement statement) {
-            EmitExpression(il, statement.Expression);
+            var methodReference = statement.Expression.Type switch {
+                BoundType.Integer => GetMethodReference(QSPGlobalName, "PrintLineMain", new[] { "System.Int32" }),
+                BoundType.String  => GetMethodReference(QSPGlobalName, "PrintLineMain", new[] { "System.String" }),
+                _                 => throw new ArgumentOutOfRangeException()
+            };
 
-            switch (statement.Expression.Type) {
-                case BoundType.Integer:
-                    il.Emit(OpCodes.Call, GetMethodReference(QSPGlobalName, "PrintLineMain", new []{ "System.Int32" }));
-                    break;
-                case BoundType.String:
-                    il.Emit(OpCodes.Call, GetMethodReference(QSPGlobalName, "PrintLineMain", new []{ "System.String" }));
-                    break;
-                default:
-                    throw new ArgumentOutOfRangeException();
-            }
+            if (methodReference == null) // already reported
+                return;
+            
+            EmitExpression(il, statement.Expression);
+            
+            il.Emit(OpCodes.Call, methodReference);
         }
 
         private void EmitProcedureStatement(ILProcessor il, BoundProcedureStatement statement) {
@@ -133,16 +133,17 @@ namespace QSP.CodeAnalysis {
                     EmitExpression(il, argument);
 
                 var methodName = statement.WithModifier ? "PrintLineMain" : "PrintLine";
-                switch (statement.Arguments[0].Type) {
-                    case BoundType.Integer:
-                        il.Emit(OpCodes.Call, GetMethodReference(QSPGlobalName, methodName, new []{ "System.Int32" }));
-                        break;
-                    case BoundType.String:
-                        il.Emit(OpCodes.Call, GetMethodReference(QSPGlobalName, methodName, new []{ "System.String" }));
-                        break;
-                    default:
-                        throw new ArgumentOutOfRangeException();
-                }
+                var methodReference = statement.Arguments[0].Type switch {
+                    BoundType.Integer => GetMethodReference(QSPGlobalName, methodName, new[] { "System.Int32" }),
+                    BoundType.String  => GetMethodReference(QSPGlobalName, methodName, new[] { "System.String" }),
+                    _                 => throw new ArgumentOutOfRangeException()
+                };
+
+                if (methodReference == null) // already reported
+                    return;
+                
+                il.Emit(OpCodes.Call, methodReference);
+
             } else {
                 throw new ArgumentException($"Unknown procedure '{statement.Procedure.Name}'", nameof(statement));
             }
@@ -190,38 +191,65 @@ namespace QSP.CodeAnalysis {
         }
         
         private readonly Dictionary<MethodSignature, MethodReference> _methods = new Dictionary<MethodSignature, MethodReference>();
+        private readonly Dictionary<string, TypeReference> _types = new Dictionary<string, TypeReference>();
         
-        private MethodReference GetMethodReference(string typeName, string methodName, string[] parameterTypeNames) {
+        private MethodReference? GetMethodReference(string typeName, string methodName, string[] parameterTypeNames) {
             var key = new MethodSignature(typeName, methodName, parameterTypeNames);
             if (_methods.TryGetValue(key, out var methodReference))
                 return methodReference;
-
-            methodReference = ImportMethodReference(typeName, methodName, parameterTypeNames);
-            _methods.Add(key, methodReference);
-            return methodReference;
+            
+            var newMethodReference = ImportMethodReference(typeName, methodName, parameterTypeNames);
+            if (newMethodReference == null)
+                return null;
+            _methods.Add(key, newMethodReference);
+            return newMethodReference;
         }
         
-        private MethodReference ImportMethodReference(string typeName, string methodName, string[] parameterTypeNames) {
+        private TypeReference? GetTypeReference(string typeName) {
+            if (_types.TryGetValue(typeName, out var typeReference))
+                return typeReference;
+            
+            var newTypeReference = ImportTypeReference(typeName);
+            if (newTypeReference == null)
+                return null;
+            
+            _types.Add(typeName, newTypeReference);
+            return newTypeReference;
+        }
+
+        private TypeDefinition? FindTypeDefinition(string typeName) {
             var foundTypes = _referenceAssemblies.SelectMany(a => a.Modules)
                 .SelectMany(m => m.Types)
                 .Where(t => t.FullName == typeName)
                 .ToArray();
-            if (foundTypes.Length == 1)
-            {
-                var foundType = foundTypes[0];
-                var methods = foundType.Methods.Where(m => m.Name == methodName);
 
-                foreach (var method in methods)
-                {
+            if (foundTypes.Length == 1) {
+                return foundTypes[0];
+            } else if (foundTypes.Length == 0) {
+                //_diagnostics.ReportRequiredTypeNotFound(null, typeName);
+                return null;
+            } else {
+                //_diagnostics.ReportRequiredTypeAmbiguous(null, typeName, foundTypes);
+                return null;
+            }
+        }
+        
+        private TypeReference? ImportTypeReference(string typeName) {
+            var typeDefinition = FindTypeDefinition(typeName);
+            return typeDefinition != null ? _assembly.MainModule.ImportReference(typeDefinition) : null;
+        }
+       
+        private MethodReference? ImportMethodReference(string typeName, string methodName, string[] parameterTypeNames) {
+            var typeDefinition = FindTypeDefinition(typeName);
+            if (typeDefinition != null) {
+                var methods = typeDefinition.Methods.Where(m => m.Name == methodName);
+                foreach (var method in methods) {
                     if (method.Parameters.Count != parameterTypeNames.Length)
                         continue;
 
                     var allParametersMatch = true;
-
-                    for (var i = 0; i < parameterTypeNames.Length; i++)
-                    {
-                        if (method.Parameters[i].ParameterType.FullName != parameterTypeNames[i])
-                        {
+                    for (var i = 0; i < parameterTypeNames.Length; i++) {
+                        if (method.Parameters[i].ParameterType.FullName != parameterTypeNames[i]) {
                             allParametersMatch = false;
                             break;
                         }
@@ -234,18 +262,10 @@ namespace QSP.CodeAnalysis {
                 }
 
                 //_diagnostics.ReportRequiredMethodNotFound(typeName, methodName, parameterTypeNames);
-                return null!;
-            }
-            else if (foundTypes.Length == 0)
-            {
-                //_diagnostics.ReportRequiredTypeNotFound(null, typeName);
-            }
-            else
-            {
-                //_diagnostics.ReportRequiredTypeAmbiguous(null, typeName, foundTypes);
+                return null;
             }
 
-            return null!;
+            return null;
         }
         
         private void EmitExpression(ILProcessor il, BoundExpression expression) {
@@ -300,17 +320,18 @@ namespace QSP.CodeAnalysis {
                 foreach (var argument in expression.Arguments) {
                     EmitExpression(il, argument);
                 }
+
+                var methodReference = expression.Arguments[0].Type switch {
+                    BoundType.Integer => GetMethodReference(QSPGlobalName, "Input", new[] { "System.Int32" }),
+                    BoundType.String  => GetMethodReference(QSPGlobalName, "Input", new[] { "System.String" }),
+                    _                 => throw new ArgumentOutOfRangeException()
+                };
+
+                if (methodReference == null) // already reported
+                    return;
                 
-                switch (expression.Arguments[0].Type) {
-                    case BoundType.Integer:
-                        il.Emit(OpCodes.Call, GetMethodReference(QSPGlobalName, "Input", new []{ "System.Int32" }));
-                        break;
-                    case BoundType.String:
-                        il.Emit(OpCodes.Call, GetMethodReference(QSPGlobalName, "Input", new []{ "System.String" }));
-                        break;
-                    default:
-                        throw new ArgumentOutOfRangeException();
-                }
+                il.Emit(OpCodes.Call, methodReference);
+
             } else {
                 throw new ArgumentException($"Unknown function '{expression.Function.Name}'", nameof(expression));
             }
@@ -352,7 +373,9 @@ namespace QSP.CodeAnalysis {
                     il.Emit(OpCodes.Rem);
                     break;
                 case BoundBinaryOperatorKind.Concatenation:
-                    il.Emit(OpCodes.Call, GetMethodReference("System.String", "Concat", new []{ "System.String", "System.String" }));
+                    var methodReference = GetMethodReference("System.String", "Concat", new []{ "System.String", "System.String" });
+                    if (methodReference != null) // already reported
+                        il.Emit(OpCodes.Call, methodReference);
                     break;
                 default:
                     throw new ArgumentOutOfRangeException();
@@ -362,8 +385,8 @@ namespace QSP.CodeAnalysis {
         private TypeReference GetTypeReference(BoundType boundType) =>
             boundType switch {
                 BoundType.Integer => _assembly.MainModule.TypeSystem.Int32,
-                BoundType.String => _assembly.MainModule.TypeSystem.String,
-                _ => throw new ArgumentOutOfRangeException(nameof(boundType), boundType, null)
+                BoundType.String  => _assembly.MainModule.TypeSystem.String,
+                _                 => throw new ArgumentOutOfRangeException(nameof(boundType), boundType, null)
             };
     }
 }
