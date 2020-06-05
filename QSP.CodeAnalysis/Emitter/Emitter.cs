@@ -109,19 +109,21 @@ namespace QSP.CodeAnalysis {
         private void EmitAssignmentStatement(ILProcessor il, BoundAssignmentStatement statement) {
 
             if (statement.Variable is BoundElementAccessExpression elementAccess) {
+                var containerType = GetArrayType(elementAccess.Variable.Type);
+                var itemType = GetTypeReference(elementAccess.Variable.Type).FullName;
                 var variableDefinition = TryEmitVariableDefinition(il, statement.Variable.Variable);
 
                 il.Emit(OpCodes.Ldloc, variableDefinition);
 
                 if (elementAccess.Index != null) {
-                    var methodReference = GetMethodReference("QSP.Runtime.IntArray", "Set", new[] { "System.Int32", "System.Int32" });
+                    var methodReference = GetMethodReference(containerType, "Set", new[] { "System.Int32", itemType });
 
                     EmitExpression(il, elementAccess.Index);
                     EmitExpression(il, statement.Expression);
 
                     il.Emit(OpCodes.Call, methodReference);
                 } else {
-                    var methodReference = GetMethodReference("QSP.Runtime.IntArray", "Add", new[] { "System.Int32" });
+                    var methodReference = GetMethodReference(containerType, "Add", new[] { itemType });
 
                     EmitExpression(il, statement.Expression);
 
@@ -320,8 +322,30 @@ namespace QSP.CodeAnalysis {
         private void EmitVariableExpression(ILProcessor il, BoundVariableExpression expression) {
             var variableDefinition = TryEmitVariableDefinition(il, expression.Variable);
 
-            il.Emit(OpCodes.Ldloc, variableDefinition);
+            if (expression is BoundElementAccessExpression elementAccessExpression) {
+                var containerType = GetArrayType(expression.Variable.Type);
+                
+                il.Emit(OpCodes.Ldloc, variableDefinition);
+
+                if (elementAccessExpression.Index != null) {
+                    var methodReference = GetMethodReference(containerType, "Get", new[] { "System.Int32" });
+                    EmitExpression(il, elementAccessExpression.Index);
+                    il.Emit(OpCodes.Call, methodReference);
+                } else {
+                    var methodReference = GetMethodReference(containerType, "Get", Array.Empty<string>());
+                    il.Emit(OpCodes.Call, methodReference);
+                }
+            } else {
+                il.Emit(OpCodes.Ldloc, variableDefinition);
+            }
         }
+
+        private static string GetArrayType(BoundType variableType) =>
+            variableType switch {
+                BoundType.Integer => "QSP.Runtime.IntArray",
+                BoundType.String  => "QSP.Runtime.StringArray",
+                _                 => throw new ArgumentOutOfRangeException()
+            };
 
         private VariableDefinition TryEmitVariableDefinition(ILProcessor il, VariableSymbol variableSymbol) {
             if (_variables.TryGetValue(variableSymbol, out var variableDefinition))

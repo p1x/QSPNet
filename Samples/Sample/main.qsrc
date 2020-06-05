@@ -2,9 +2,23 @@
 *pl 'Hello ' + input input ('Enter ' + 'welcome message:') + '!'
 pl 'Some additional test output.'
 
-a[] = 1 + 2
-b = 10   
-a[1] = b
-   
+a[] = 10
+a[] = a[] + 10
+
+a[0]
+a[1]
+a[2]
+
+a[-1] = a[0] - a[1]
+a[-1]   
   
   
+$s = 'test'
+$strings[] = 'item1'
+$strings[] = 'item2'
+$strings[] = 'item3'
+$strings[1] = $s
+
+$strings[0]
+$strings[1]
+$strings[2]
