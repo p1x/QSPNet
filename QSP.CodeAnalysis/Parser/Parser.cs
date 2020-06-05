@@ -120,7 +120,7 @@ namespace QSP.CodeAnalysis {
             var argument = Current.Kind != SyntaxTokenKind.CloseSquareBracket
                 ? ParseExpression(true)
                 : null;
-            var closeBracket = Match(SyntaxTokenKind.OpenSquareBracket);
+            var closeBracket = Match(SyntaxTokenKind.CloseSquareBracket);
 
             return new ElementAccessExpressionSyntax(nameExpression, openBracket, argument, closeBracket);
         }
