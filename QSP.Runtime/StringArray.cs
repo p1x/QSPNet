@@ -14,7 +14,7 @@ namespace QSP.Runtime {
 
         public string Get() =>
             _items.Count >= 0 
-                ? _items[^0]
+                ? _items[^1]
                 : DefaultValue;
 
         public string Get(int index) {
@@ -36,8 +36,8 @@ namespace QSP.Runtime {
                     _items.InsertRange(0, placeHolders);
                     _offset = index;
                 } else { // adjustedIndex >= _items.Count
-                    var placeHolders = Enumerable.Repeat(@default, adjustedIndex - _items.Count).ToList();
-                    placeHolders[^0] = item;
+                    var placeHolders = Enumerable.Repeat(@default, adjustedIndex - (_items.Count - 1)).ToList();
+                    placeHolders[^1] = item;
                     _items.AddRange(placeHolders);
                 }
             }
