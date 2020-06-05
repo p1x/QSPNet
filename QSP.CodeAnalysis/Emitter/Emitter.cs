@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
@@ -107,9 +107,31 @@ namespace QSP.CodeAnalysis {
         }
 
         private void EmitAssignmentStatement(ILProcessor il, BoundAssignmentStatement statement) {
-            var variableDefinition = TryEmitVariableDefinition(il, statement.Variable.Variable);
-            EmitExpression(il, statement.Expression);
-            il.Emit(OpCodes.Stloc, variableDefinition);
+
+            if (statement.Variable is BoundElementAccessExpression elementAccess) {
+                var variableDefinition = TryEmitVariableDefinition(il, statement.Variable.Variable);
+
+                il.Emit(OpCodes.Ldloc, variableDefinition);
+
+                if (elementAccess.Index != null) {
+                    var methodReference = GetMethodReference("QSP.Runtime.IntArray", "Set", new[] { "System.Int32", "System.Int32" });
+
+                    EmitExpression(il, elementAccess.Index);
+                    EmitExpression(il, statement.Expression);
+
+                    il.Emit(OpCodes.Call, methodReference);
+                } else {
+                    var methodReference = GetMethodReference("QSP.Runtime.IntArray", "Add", new[] { "System.Int32" });
+
+                    EmitExpression(il, statement.Expression);
+
+                    il.Emit(OpCodes.Call, methodReference);    
+                }
+            } else {
+                var variableDefinition = TryEmitVariableDefinition(il, statement.Variable.Variable);
+                EmitExpression(il, statement.Expression);
+                il.Emit(OpCodes.Stloc, variableDefinition);    
+            }
         }
 
         private void EmitExpressionStatement(ILProcessor il, BoundExpressionStatement statement) {
@@ -304,14 +326,35 @@ namespace QSP.CodeAnalysis {
         private VariableDefinition TryEmitVariableDefinition(ILProcessor il, VariableSymbol variableSymbol) {
             if (_variables.TryGetValue(variableSymbol, out var variableDefinition))
                 return variableDefinition;
-            
-            var typeReference = GetTypeReference(variableSymbol.Type);
+
+            var typeReference = variableSymbol.Kind switch {
+                VariableKind.Simple => GetTypeReference(variableSymbol.Type),
+                VariableKind.Array  => variableSymbol.Type switch {
+                    BoundType.Integer => GetTypeReference("QSP.Runtime.IntArray"),
+                    BoundType.String  => GetTypeReference("QSP.Runtime.StringArray"),
+                    _                 => throw new ArgumentOutOfRangeException()
+                },
+                _                   => GetTypeReference(variableSymbol.Type)
+            };
+
             variableDefinition = new VariableDefinition(typeReference);
 
             il.Body.Variables.Add(variableDefinition);
 
             _variables.Add(variableSymbol, variableDefinition);
 
+            if (variableSymbol.Kind == VariableKind.Array) {
+                var containerTypeName = variableSymbol.Type switch {
+                    BoundType.Integer => "QSP.Runtime.IntArray",
+                    BoundType.String  => "QSP.Runtime.StringArray",
+                    _                 => throw new ArgumentOutOfRangeException()
+                };
+                
+                var containerCtor = GetMethodReference(containerTypeName, ".ctor", Array.Empty<string>());
+                il.Emit(OpCodes.Newobj, containerCtor);
+                il.Emit(OpCodes.Stloc, variableDefinition);
+            }
+            
             return variableDefinition;
         }
 
