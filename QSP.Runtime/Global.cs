@@ -28,58 +28,48 @@ namespace QSP.Runtime {
         public static object DynamicAdd(int a, string b) {
             if (int.TryParse(b, out var bInt))
                 return a + bInt;
-            return a.ToString() + b;
+            return string.Concat(a.ToString(), b);
         }
 
         public static object DynamicAdd(string a, int b) {
             if (int.TryParse(a, out var aInt))
                 return aInt + b;
-            return a + b.ToString();
+            return string.Concat(a, b.ToString());
         }
         
-        public static object DynamicAdd(int a, object b) {
-            if (b is string bStr)
-                return DynamicAdd(a, bStr);
-            if (b is int bInt)
-                return a + bInt;
-            
-            throw new ArgumentException("Unsupported runtime type", nameof(b));
-        }
-        
-        public static object DynamicAdd(object a, int b) {
-            if (a is string aStr)
-                return DynamicAdd(aStr, b);
-            if (a is int aInt)
-                return aInt + b;
-            
-            throw new ArgumentException("Unsupported runtime type", nameof(a));
-        }
-        
-        public static object DynamicAdd(string a, object b) {
-            if (b is int bInt)
-                return DynamicAdd(a, bInt);
-            if (b is string bStr)
-                return a + bStr;
-            
-            throw new ArgumentException("Unsupported runtime type", nameof(b));
-        }
+        public static object DynamicAdd(int a, object b) =>
+            b switch {
+                string y => DynamicAdd(a, y),
+                int y    => a + y,
+                _        => throw new ArgumentException("Unsupported runtime type", nameof(b))
+            };
 
-        public static object DynamicAdd(object a, string b) {
-            if (a is int aInt)
-                return DynamicAdd(aInt, b);
-            if (a is string aStr)
-                return aStr + b;
+        public static object DynamicAdd(object a, int b) =>
+            a switch {
+                string x => DynamicAdd(x, b),
+                int x    => x + b,
+                _        => throw new ArgumentException("Unsupported runtime type", nameof(a))
+            };
 
-            throw new ArgumentException("Unsupported runtime type", nameof(a));
-        }
+        public static object DynamicAdd(string a, object b) =>
+            b switch {
+                string y => string.Concat(a, y),
+                int y    => DynamicAdd(a, y),
+                _        => throw new ArgumentException("Unsupported runtime type", nameof(b))
+            };
 
-        public static object DynamicAdd(object a, object b) {
-            if (a is string aStr)
-                return DynamicAdd(aStr, b);
-            if (a is int aInt)
-                return DynamicAdd(aInt, b);
+        public static object DynamicAdd(object a, string b) =>
+            a switch {
+                string x => string.Concat(x, b),
+                int x    => DynamicAdd(x, b),
+                _           => throw new ArgumentException("Unsupported runtime type", nameof(a))
+            };
 
-            throw new ArgumentException("Unsupported runtime type", nameof(a));
-        }
+        public static object DynamicAdd(object a, object b) =>
+            a switch {
+                string x => DynamicAdd(x, b),
+                int x    => DynamicAdd(x, b),
+                _        => throw new ArgumentException("Unsupported runtime type", nameof(a))
+            };
     }
 }
