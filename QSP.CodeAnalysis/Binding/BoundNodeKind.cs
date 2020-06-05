@@ -12,5 +12,6 @@
         VariableExpression,
         FunctionExpression,
         ConversionExpression,
+        ElementAccessExpression
     }
 }

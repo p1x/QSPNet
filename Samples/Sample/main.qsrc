@@ -7,5 +7,24 @@ pl 'Some additional test output.'
 
 *pl "(input 'first' + 2) + (input 'second' + 20)"
 (input 'first' + 2) + (input 'second' + 20)
+
+a[] = 10
+a[] = a[] + 10
+
+a[0]
+a[1]
+a[2]
+
+a[-1] = a[0] - a[1]
+a[-1]   
   
   
+$s = 'test'
+$strings[] = 'item1'
+$strings[] = 'item2'
+$strings[] = 'item3'
+$strings[1] = $s
+
+$strings[0]
+$strings[1]
+$strings[2]

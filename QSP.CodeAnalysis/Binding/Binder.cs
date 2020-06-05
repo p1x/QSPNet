@@ -35,12 +35,23 @@ namespace QSP.CodeAnalysis {
             };
 
         private BoundStatement BindAssignmentStatement(AssignmentStatementSyntax statement) {
-            var variable   = BindVariable(statement.Identifier);
+            var variable = statement.Variable switch {
+                NameExpressionSyntax          x => BindNameExpression(x),
+                ElementAccessExpressionSyntax x => BindElementAccessExpression(x),
+                _                               => throw new ArgumentOutOfRangeException()
+            };
+            
+            if (variable is BoundErrorExpression)
+                return BoundErrorStatement.Instance;
+            
             var expression = BindExpression(statement.Expression);
             if (expression.Kind == BoundNodeKind.ErrorExpression)
                 return BoundErrorStatement.Instance;
-            
-            return new BoundAssignmentStatement(variable, expression);
+
+            if (variable is BoundVariableExpression v)
+                return new BoundAssignmentStatement(v, expression);
+
+            throw new InvalidOperationException();
         }
 
         private BoundStatement BindExpressionStatement(ExpressionStatementSyntax statement) {
@@ -77,6 +88,7 @@ namespace QSP.CodeAnalysis {
             expression switch {
                 LiteralExpressionSyntax       x => BindLiteralExpression(x),
                 NameExpressionSyntax          x => BindNameExpression(x),
+                ElementAccessExpressionSyntax x => BindElementAccessExpression(x),
                 UnaryExpressionSyntax         x => BindUnaryExpression(x),
                 BinaryExpressionSyntax        x => BindBinaryExpression(x),
                 ParenthesisedExpressionSyntax x => BindParenthesisedExpression(x),
@@ -104,16 +116,41 @@ namespace QSP.CodeAnalysis {
             return new BoundVariableExpression(variable);
         }
 
-        private VariableSymbol BindVariable(SyntaxToken identifierToken) {
+        private BoundExpression BindElementAccessExpression(ElementAccessExpressionSyntax expression) {
+            if (expression.Name.Identifier.IsManufactured)
+                return BoundErrorExpression.Instance;
+            
+            var argument = expression.Argument != null
+                ? BindExpression(expression.Argument)
+                : null;
+
+            VariableKind kind;
+            if (argument == null)
+                kind = VariableKind.Array; // list like addition to end or access to last element 
+            else if (argument.Type == BoundType.Number)
+                kind = VariableKind.Array;
+            else if (argument.Type == BoundType.String)
+                kind = VariableKind.Dictionary;
+            else
+                return BoundErrorExpression.Instance;
+
+            var variable = BindVariable(expression.Name.Identifier, kind);
+            
+            return new BoundElementAccessExpression(variable, argument);
+        }
+
+        private VariableSymbol BindVariable(SyntaxToken identifierToken, VariableKind kind = VariableKind.Simple) {
             if (identifierToken.Kind != SyntaxTokenKind.Identifier)
                 throw new ArgumentException("identifierToken.Kind != SyntaxTokenKind.Identifier", nameof(identifierToken));
 
             var name = identifierToken.Text.ToUpperInvariant();
-            if (_variableSymbols.TryGetValue(name, out var symbol))
+            if (_variableSymbols.TryGetValue(name, out var symbol)) {
+                symbol.Kind |= kind; // modify variable kind based on access
                 return symbol;
+            }
 
             var type = name.StartsWith('$') ? BoundType.String : BoundType.Number;
-            return _variableSymbols[name] = new VariableSymbol(name, type);
+            return _variableSymbols[name] = new VariableSymbol(name, type) { Kind = kind };
         }
         
         private BoundExpression BindUnaryExpression(UnaryExpressionSyntax expression) {

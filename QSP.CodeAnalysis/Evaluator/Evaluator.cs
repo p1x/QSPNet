@@ -43,7 +43,7 @@ namespace QSP.CodeAnalysis {
 
         private EvaluationResult EvaluateAssignmentStatement(BoundAssignmentStatement s) {
             var value = EvaluateExpression(s.Expression);
-            return new VariableChangeResult(s.Variable, value);
+            return new VariableChangeResult(s.Variable.Variable, value);
         }
 
         private object EvaluateExpression(BoundExpression expression) =>

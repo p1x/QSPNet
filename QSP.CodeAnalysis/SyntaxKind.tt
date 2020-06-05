@@ -31,10 +31,12 @@
         ("Slash",     "/", 5, 0),
     };
     var nonOperatorTokens = new (string name, string text)[] {
-        ("OpenParenthesis",  "("),
-        ("CloseParenthesis", ")"),
-        ("ContinueLine",     "_"),
-        ("Comma",            ",")
+        ("OpenParenthesis",    "("),
+        ("CloseParenthesis",   ")"),
+        ("ContinueLine",       "_"),
+        ("Comma",              ","),
+        ("OpenSquareBracket",  "["),
+        ("CloseSquareBracket", "]"),
     };
     var functions = new (string name, string text, bool mustBeParenthesised)[] {
         ("InputFunc", "INPUT", false)
@@ -48,15 +50,15 @@
         .Concat(functions.Select(x => (x.name, x.text)))
         .Concat(procedures.Select(x => (x.name, x.text)))
         .ToList();
-
     // Not tokens
     var expressions = new[] {
         "Literal",
         "Unary",
         "Binary",
         "Name",
+        "ElementAccess",
         "Parenthesised",
-        "Function"
+        "Function",
     };
 
     var statements = new[] {
@@ -66,7 +68,7 @@
     };
 
     var custom = new[] {
-        "CompilationUnit"
+        "CompilationUnit",
     };
 
     List<(string name, SyntaxKindKind kind, int id)> kinds = Enumerable.Empty<(string, SyntaxKindKind)>()

@@ -107,16 +107,45 @@ namespace QSP.CodeAnalysis {
         }
 
         private void EmitAssignmentStatement(ILProcessor il, BoundAssignmentStatement statement) {
-            var variableDefinition = TryEmitVariableDefinition(il, statement.Variable);
-            EmitExpression(il, statement.Expression);
-            il.Emit(OpCodes.Stloc, variableDefinition);
+
+            if (statement.Variable is BoundElementAccessExpression elementAccess) {
+                var containerType = GetArrayType(elementAccess.Variable.Type);
+                var itemType = GetTypeReference(elementAccess.Variable.Type).FullName;
+                var variableDefinition = TryEmitVariableDefinition(il, statement.Variable.Variable);
+
+                il.Emit(OpCodes.Ldloc, variableDefinition);
+
+                if (elementAccess.Index != null) {
+                    var methodReference = GetMethodReference(containerType, "Set", new[] { "System.Int32", itemType });
+
+                    EmitExpression(il, elementAccess.Index);
+                    EmitExpression(il, statement.Expression);
+
+                    il.Emit(OpCodes.Call, methodReference);
+                } else {
+                    var methodReference = GetMethodReference(containerType, "Add", new[] { itemType });
+
+                    EmitExpression(il, statement.Expression);
+
+                    il.Emit(OpCodes.Call, methodReference);    
+                }
+            } else {
+                var variableDefinition = TryEmitVariableDefinition(il, statement.Variable.Variable);
+                EmitExpression(il, statement.Expression);
+                il.Emit(OpCodes.Stloc, variableDefinition);    
+            }
         }
 
         private void EmitExpressionStatement(ILProcessor il, BoundExpressionStatement statement) {
+            var clrTypeName = statement.Expression.Type.ClrType.FullName;
+            var methodReference = GetMethodReference(QSPGlobalName, "PrintLineMain", new[] { clrTypeName });
+
+            if (methodReference == null) // already reported
+                return;
+
             EmitExpression(il, statement.Expression);
 
-            var clrTypeName = statement.Expression.Type.ClrType.FullName;
-            il.Emit(OpCodes.Call, GetMethodReference(QSPGlobalName, "PrintLineMain", new []{ clrTypeName }));
+            il.Emit(OpCodes.Call, methodReference);
         }
 
         private void EmitProcedureStatement(ILProcessor il, BoundProcedureStatement statement) {
@@ -126,10 +155,13 @@ namespace QSP.CodeAnalysis {
 
                 var methodName = statement.WithModifier ? "PrintLineMain" : "PrintLine";
                 var argumentTypeNames = statement.Arguments.Select(x => x.Type.ClrType.FullName).ToArray();
-
-                il.Emit(OpCodes.Call, GetMethodReference(QSPGlobalName, methodName, argumentTypeNames));
-
-
+                var methodReference = GetMethodReference(QSPGlobalName, methodName, argumentTypeNames);
+                
+                if (methodReference == null) // already reported
+                    return;
+                
+                il.Emit(OpCodes.Call, methodReference);
+                
             } else {
                 throw new ArgumentException($"Unknown procedure '{statement.Procedure.Name}'", nameof(statement));
             }
@@ -177,38 +209,65 @@ namespace QSP.CodeAnalysis {
         }
         
         private readonly Dictionary<MethodSignature, MethodReference> _methods = new Dictionary<MethodSignature, MethodReference>();
+        private readonly Dictionary<string, TypeReference> _types = new Dictionary<string, TypeReference>();
         
-        private MethodReference GetMethodReference(string typeName, string methodName, string[] argumentTypeNames) {
+        private MethodReference? GetMethodReference(string typeName, string methodName, string[] argumentTypeNames) {
             var key = new MethodSignature(typeName, methodName, argumentTypeNames);
             if (_methods.TryGetValue(key, out var methodReference))
                 return methodReference;
-
-            methodReference = ImportMethodReference(typeName, methodName, argumentTypeNames);
-            _methods.Add(key, methodReference);
-            return methodReference;
+            
+            var newMethodReference = ImportMethodReference(typeName, methodName, argumentTypeNames);
+            if (newMethodReference == null)
+                return null;
+            _methods.Add(key, newMethodReference);
+            return newMethodReference;
         }
         
-        private MethodReference ImportMethodReference(string typeName, string methodName, string[] parameterTypeNames) {
+        private TypeReference? GetTypeReference(string typeName) {
+            if (_types.TryGetValue(typeName, out var typeReference))
+                return typeReference;
+            
+            var newTypeReference = ImportTypeReference(typeName);
+            if (newTypeReference == null)
+                return null;
+            
+            _types.Add(typeName, newTypeReference);
+            return newTypeReference;
+        }
+
+        private TypeDefinition? FindTypeDefinition(string typeName) {
             var foundTypes = _referenceAssemblies.SelectMany(a => a.Modules)
                 .SelectMany(m => m.Types)
                 .Where(t => t.FullName == typeName)
                 .ToArray();
-            if (foundTypes.Length == 1)
-            {
-                var foundType = foundTypes[0];
-                var methods = foundType.Methods.Where(m => m.Name == methodName);
 
-                foreach (var method in methods)
-                {
+            if (foundTypes.Length == 1) {
+                return foundTypes[0];
+            } else if (foundTypes.Length == 0) {
+                //_diagnostics.ReportRequiredTypeNotFound(null, typeName);
+                return null;
+            } else {
+                //_diagnostics.ReportRequiredTypeAmbiguous(null, typeName, foundTypes);
+                return null;
+            }
+        }
+        
+        private TypeReference? ImportTypeReference(string typeName) {
+            var typeDefinition = FindTypeDefinition(typeName);
+            return typeDefinition != null ? _assembly.MainModule.ImportReference(typeDefinition) : null;
+        }
+       
+        private MethodReference? ImportMethodReference(string typeName, string methodName, string[] parameterTypeNames) {
+            var typeDefinition = FindTypeDefinition(typeName);
+            if (typeDefinition != null) {
+                var methods = typeDefinition.Methods.Where(m => m.Name == methodName);
+                foreach (var method in methods) {
                     if (method.Parameters.Count != parameterTypeNames.Length)
                         continue;
 
                     var allParametersMatch = true;
-
-                    for (var i = 0; i < parameterTypeNames.Length; i++)
-                    {
-                        if (method.Parameters[i].ParameterType.FullName != parameterTypeNames[i])
-                        {
+                    for (var i = 0; i < parameterTypeNames.Length; i++) {
+                        if (method.Parameters[i].ParameterType.FullName != parameterTypeNames[i]) {
                             allParametersMatch = false;
                             break;
                         }
@@ -221,18 +280,10 @@ namespace QSP.CodeAnalysis {
                 }
 
                 //_diagnostics.ReportRequiredMethodNotFound(typeName, methodName, parameterTypeNames);
-                return null!;
-            }
-            else if (foundTypes.Length == 0)
-            {
-                //_diagnostics.ReportRequiredTypeNotFound(null, typeName);
-            }
-            else
-            {
-                //_diagnostics.ReportRequiredTypeAmbiguous(null, typeName, foundTypes);
+                return null;
             }
 
-            return null!;
+            return null;
         }
         
         private void EmitExpression(ILProcessor il, BoundExpression expression) {
@@ -260,20 +311,55 @@ namespace QSP.CodeAnalysis {
         private void EmitVariableExpression(ILProcessor il, BoundVariableExpression expression) {
             var variableDefinition = TryEmitVariableDefinition(il, expression.Variable);
 
-            il.Emit(OpCodes.Ldloc, variableDefinition);
+            if (expression is BoundElementAccessExpression elementAccessExpression) {
+                var containerType = GetArrayType(expression.Variable.Type);
+                
+                il.Emit(OpCodes.Ldloc, variableDefinition);
+
+                if (elementAccessExpression.Index != null) {
+                    var methodReference = GetMethodReference(containerType, "Get", new[] { "System.Int32" });
+                    EmitExpression(il, elementAccessExpression.Index);
+                    il.Emit(OpCodes.Call, methodReference);
+                } else {
+                    var methodReference = GetMethodReference(containerType, "Get", Array.Empty<string>());
+                    il.Emit(OpCodes.Call, methodReference);
+                }
+            } else {
+                il.Emit(OpCodes.Ldloc, variableDefinition);
+            }
+        }
+
+        private static string GetArrayType(BoundType variableType) {
+            if (variableType.ClrType == typeof(int))
+                return "QSP.Runtime.IntArray";
+            if (variableType.ClrType == typeof(string))
+                return "QSP.Runtime.StringArray";
+            throw new ArgumentOutOfRangeException();
         }
 
         private VariableDefinition TryEmitVariableDefinition(ILProcessor il, VariableSymbol variableSymbol) {
             if (_variables.TryGetValue(variableSymbol, out var variableDefinition))
                 return variableDefinition;
-            
-            var typeReference = GetTypeReference(variableSymbol.Type);
+
+            var typeReference = variableSymbol.Kind switch {
+                VariableKind.Simple => GetTypeReference(variableSymbol.Type),
+                VariableKind.Array  => GetTypeReference(GetArrayType(variableSymbol.Type)),
+                _                   => GetTypeReference(variableSymbol.Type)
+            };
+
             variableDefinition = new VariableDefinition(typeReference);
 
             il.Body.Variables.Add(variableDefinition);
 
             _variables.Add(variableSymbol, variableDefinition);
 
+            if (variableSymbol.Kind == VariableKind.Array) {
+                var containerTypeName = GetArrayType(variableSymbol.Type);
+                var containerCtor = GetMethodReference(containerTypeName, ".ctor", Array.Empty<string>());
+                il.Emit(OpCodes.Newobj, containerCtor);
+                il.Emit(OpCodes.Stloc, variableDefinition);
+            }
+            
             return variableDefinition;
         }
 
@@ -282,8 +368,14 @@ namespace QSP.CodeAnalysis {
                 foreach (var argument in expression.Arguments) {
                     EmitExpression(il, argument);
                 }
+                
                 var argumentTypeNames = expression.Arguments.Select(x => x.Type.ClrType.FullName).ToArray();
-                il.Emit(OpCodes.Call, GetMethodReference(QSPGlobalName, "Input", argumentTypeNames));
+                var methodReference = GetMethodReference(QSPGlobalName, "Input", argumentTypeNames);
+                
+                if (methodReference == null) // already reported
+                    return;
+                
+                il.Emit(OpCodes.Call, methodReference);
             } else {
                 throw new ArgumentException($"Unknown function '{expression.Function.Name}'", nameof(expression));
             }
@@ -324,7 +416,9 @@ namespace QSP.CodeAnalysis {
                     il.Emit(OpCodes.Rem);
                     break;
                 case BoundBinaryOperatorKind.Concatenation:
-                    il.Emit(OpCodes.Call, GetMethodReference("System.String", "Concat", new []{ "System.String", "System.String" }));
+                    var methodReference = GetMethodReference("System.String", "Concat", new []{ "System.String", "System.String" });
+                    if (methodReference != null) // already reported
+                        il.Emit(OpCodes.Call, methodReference);
                     break;
                 case BoundBinaryOperatorKind.DynamicAddition:
                     il.Emit(OpCodes.Call,
